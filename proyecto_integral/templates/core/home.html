@@ -1,0 +1,117 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Medici - Encuentra artistas para tus proyectos{% endblock %}
+
+{% block content %}
+
+<div class="hero-section" style="height: 50vh;">
+    <div class="text-center text-white">
+        <h1 class="display-3 fw-bold">Conecta con artistas únicos</h1>
+        <p class="lead">Encuentra al creador perfecto para tu proyecto, igual que los Médici en el Renacimiento</p>
+        <a href="{% url 'registro' %}" class="btn btn-primary btn-lg">Comenzar ahora</a>
+    </div>
+</div>
+
+<div class="container py-5">
+
+<!-- CARRUSEL DE CATEGORÍAS -->
+<h2 class="text-center mb-4">Explora por categorías</h2>
+<div id="categoriasCarousel" class="carousel slide" data-bs-ride="carousel">
+    <div class="carousel-inner">
+        <div class="carousel-item active">
+            <div class="row">
+                <!-- Tarjeta 1: Ilustración -->
+                <div class="col-md-3">
+                    <div class="category-card position-relative overflow-hidden rounded-3">
+                        <img src="{% static 'images/ilustracion.jpg' %}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
+                        <div class="category-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
+                            <h3 class="text-white d-none">Ilustración</h3>
+                        </div>
+                    </div>
+                </div>
+                <!-- Tarjeta 2: Diseño -->
+                <div class="col-md-3">
+                    <div class="category-card position-relative overflow-hidden rounded-3">
+                        <img src="{% static 'images/diseno.jpg' %}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
+                        <div class="category-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
+                            <h3 class="text-white d-none">Diseño</h3>
+                        </div>
+                    </div>
+                </div>
+                <!-- Tarjeta 3: Pintura -->
+                <div class="col-md-3">
+                    <div class="category-card position-relative overflow-hidden rounded-3">
+                        <img src="{% static 'images/pintura.jpg' %}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
+                        <div class="category-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
+                            <h3 class="text-white d-none">Pintura</h3>
+                        </div>
+                    </div>
+                </div>
+                <!-- Tarjeta 4: Pixel Art -->
+                <div class="col-md-3">
+                    <div class="category-card position-relative overflow-hidden rounded-3">
+                        <img src="{% static 'images/pixelart.jpg' %}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
+                        <div class="category-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
+                            <h3 class="text-white d-none">Pixel Art</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    <!-- TOP 5 PERFILES -->
+    <h2 class="text-center my-5">Artistas más valorados</h2>
+    <div class="row">
+        {% for artista in top_artistas %}
+        <div class="col-md-2 col-6 mb-4">
+            <div class="artist-card position-relative overflow-hidden rounded-circle">
+                <img src="{{ artista.foto.url|default:'/static/images/default-artist.jpg' }}" class="img-fluid w-100" style="aspect-ratio: 1; object-fit: cover;">
+                <div class="artist-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
+                    <span class="text-white fw-bold d-none">{{ artista.nombre }}</span>
+                </div>
+            </div>
+            <p class="text-center mt-2 fw-bold">{{ artista.nombre }}</p>
+        </div>
+        {% empty %}
+        <p class="text-center">Próximamente artistas destacados</p>
+        {% endfor %}
+    </div>
+
+    <!-- TOP 5 COMISIONES MÁS PEDIDAS -->
+    <h2 class="text-center my-5">Comisiones más populares</h2>
+    <div class="row">
+        {% for comision in top_comisiones %}
+        <div class="col-md-2 col-6 mb-4">
+            <div class="comision-card position-relative overflow-hidden rounded-3">
+                <img src="{{ comision.imagen.url|default:'/static/images/default-commission.jpg' }}" class="img-fluid w-100" style="height: 150px; object-fit: cover;">
+                <div class="comision-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
+                    <span class="text-white fw-bold d-none">{{ comision.titulo }}</span>
+                </div>
+            </div>
+            <p class="text-center mt-2">{{ comision.titulo }}</p>
+        </div>
+        {% empty %}
+        <p class="text-center">Próximamente comisiones destacadas</p>
+        {% endfor %}
+    </div>
+</div>
+
+
+<style>
+    .transition {
+        transition: all 0.3s ease;
+    }
+    .hover-bg-opacity-75:hover {
+        background-color: rgba(0,0,0,0.75) !important;
+    }
+    .hover-bg-opacity-75:hover .d-none {
+        display: block !important;
+    }
+    .category-card, .artist-card, .comision-card {
+        cursor: pointer;
+    }
+</style>
+
+{% endblock %}

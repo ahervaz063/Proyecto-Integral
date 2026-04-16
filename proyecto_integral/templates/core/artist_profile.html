@@ -1,0 +1,420 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Perfil de Artista{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Layout principal */
+    .perfil-container {
+        display: flex;
+        min-height: calc(100vh - 70px);
+    }
+    /* Barra lateral izquierda fija */
+    .sidebar {
+        width: 20%;
+        background-color: #f5f5f5;
+        padding: 1.5rem;
+        position: sticky;
+        top: 0;
+        height: calc(100vh - 70px);
+        overflow-y: auto;
+        border-right: 1px solid #ddd;
+    }
+    .foto-perfil {
+        text-align: center;
+    }
+    .foto-perfil img {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .editar-perfil {
+        display: block;
+        text-align: center;
+        margin: 1rem 0;
+        color: #007bff;
+        text-decoration: none;
+    }
+    .descripcion {
+        margin: 1rem 0;
+        font-size: 0.9rem;
+        color: #555;
+    }
+    .social-links a {
+        display: block;
+        color: #333;
+        text-decoration: none;
+        margin: 0.5rem 0;
+    }
+    /* Contenido principal */
+    .contenido {
+        width: 80%;
+        padding: 1.5rem;
+    }
+    /* Tabs horizontales */
+    .tabs {
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 2px solid #ddd;
+        margin-bottom: 2rem;
+    }
+    .tab {
+        padding: 0.8rem 1.5rem;
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-size: 1rem;
+        transition: 0.3s;
+    }
+    .tab.activo {
+        border-bottom: 3px solid #333;
+        font-weight: bold;
+    }
+    /* Contenedor de paneles con animación */
+    .panel-container {
+        position: relative;
+        overflow: hidden;
+    }
+    .panel {
+        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        opacity: 1;
+        transform: translateX(0);
+    }
+    .panel.oculto {
+        display: none;
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    /* Tarjeta de comisión */
+    .comision-card {
+        background-color: #fafafa;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        position: relative;
+    }
+    .comision-img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    .comision-info {
+        flex: 1;
+    }
+    .comision-titulo {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+    .badges {
+        display: flex;
+        gap: 0.5rem;
+        margin: 0.5rem 0;
+    }
+    .badge {
+        background-color: #e0e0e0;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+    }
+    .comision-desc {
+        font-size: 0.9rem;
+        color: #555;
+    }
+    .comision-acciones {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+    .icono-accion {
+        cursor: pointer;
+        font-size: 1.2rem;
+    }
+    .btn-mas {
+        display: inline-block;
+        margin-top: 1rem;
+        padding: 0.5rem 1rem;
+        background-color: #333;
+        color: white;
+        border-radius: 30px;
+        text-decoration: none;
+    }
+    /* Galería portfolio */
+    .galeria {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    .item-portfolio {
+        width: calc(25% - 0.25rem);
+        position: relative;
+        aspect-ratio: 3 / 4;
+        overflow: hidden;
+    }
+    .item-portfolio img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: 0.3s;
+    }
+    .item-portfolio:hover img {
+        filter: brightness(0.6);
+    }
+    .portfolio-acciones {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        display: none;
+        gap: 0.5rem;
+    }
+    .item-portfolio:hover .portfolio-acciones {
+        display: flex;
+    }
+    /* Políticas y forms compactos */
+    .policy-card, .form-card {
+        background-color: #f9f9f9;
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 0.8rem 1rem;
+        margin-bottom: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        position: relative;
+    }
+    .policy-icono, .form-icono {
+        font-size: 1.5rem;
+    }
+    .policy-info, .form-info {
+        flex: 1;
+    }
+    .policy-nombre, .form-nombre {
+        font-weight: bold;
+    }
+    .policy-desc, .form-desc {
+        font-size: 0.8rem;
+        color: #666;
+    }
+    /* Reseñas */
+    .media-resumen {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    .media-numero {
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+    .reseña-card {
+        background-color: #f9f9f9;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    .reseña-header {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+    .reseña-foto {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    .reseña-user {
+        font-weight: bold;
+    }
+    .reseña-puntuacion {
+        font-size: 0.9rem;
+        color: gold;
+    }
+    .reseña-fecha {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        font-size: 0.7rem;
+        color: #999;
+    }
+    .reseña-comentario {
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="perfil-container">
+    <!-- Sidebar izquierda fija -->
+    <aside class="sidebar">
+        <div class="foto-perfil">
+            <img src="{% static 'recursos/perfil-top.jpeg' %}" alt="Foto perfil">
+            <h3>Ana García</h3>
+            <p>@anartista</p>
+            <a href="#" class="editar-perfil">✏️ Editar perfil</a>
+        </div>
+        <div class="descripcion">
+            <p>Ilustradora digital especializada en personajes y entornos fantásticos. Abierta a comisiones.</p>
+        </div>
+        <div class="social-links">
+            <a href="#">📷 Instagram</a>
+            <a href="#">🐦 Twitter</a>
+            <a href="#">🎨 Behance</a>
+        </div>
+    </aside>
+
+    <!-- Contenido principal -->
+    <div class="contenido">
+        <!-- Tabs horizontales -->
+        <div class="tabs">
+            <button class="tab activo" data-tab="comisiones">Comisiones</button>
+            <button class="tab" data-tab="portfolio">Portfolio</button>
+            <button class="tab" data-tab="politicas">Políticas</button>
+            <button class="tab" data-tab="forms">Forms</button>
+            <button class="tab" data-tab="reseñas">Reseñas</button>
+        </div>
+
+        <!-- Paneles (contenido) -->
+        <div class="panel-container">
+            <!-- Panel Comisiones -->
+            <div id="comisiones" class="panel">
+                <div id="lista-comisiones">
+                    <!-- Ejemplo de comisión -->
+                    <div class="comision-card">
+                        <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="Ejemplo" class="comision-img">
+                        <div class="comision-info">
+                            <div class="comision-titulo">Retrato realista</div>
+                            <div class="badges">
+                                <span class="badge">📦 3 slots</span>
+                                <span class="badge">⏱️ 7 días</span>
+                                <span class="badge">💰 50€</span>
+                            </div>
+                            <div class="comision-desc">Retrato digital estilo realista, fondo sencillo, entregado en alta resolución.</div>
+                        </div>
+                        <div class="comision-acciones">
+                            <span class="icono-accion">✏️</span>
+                            <span class="icono-accion">🗑️</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="#" class="btn-mas">+ Añadir comisión</a>
+            </div>
+
+            <!-- Panel Portfolio -->
+            <div id="portfolio" class="panel oculto">
+                <div class="galeria">
+                    <div class="item-portfolio">
+                        <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="obra1">
+                        <div class="portfolio-acciones">
+                            <span>✏️</span>
+                            <span>🗑️</span>
+                        </div>
+                    </div>
+                    <div class="item-portfolio">
+                        <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="obra2">
+                        <div class="portfolio-acciones">
+                            <span>✏️</span>
+                            <span>🗑️</span>
+                        </div>
+                    </div>
+                    <div class="item-portfolio">
+                        <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="obra3">
+                        <div class="portfolio-acciones">
+                            <span>✏️</span>
+                            <span>🗑️</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="#" class="btn-mas">+ Añadir imagen</a>
+            </div>
+
+            <!-- Panel Políticas -->
+            <div id="politicas" class="panel oculto">
+                <div>
+                    <div class="policy-card">
+                        <div class="policy-icono">⚙️</div>
+                        <div class="policy-info">
+                            <div class="policy-nombre">Pago por adelantado</div>
+                            <div class="policy-desc">Se requiere 50% antes de empezar.</div>
+                        </div>
+                        <div class="comision-acciones">
+                            <span>✏️</span>
+                            <span>🗑️</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="#" class="btn-mas">+ Añadir política</a>
+            </div>
+
+            <!-- Panel Forms -->
+            <div id="forms" class="panel oculto">
+                <div>
+                    <div class="form-card">
+                        <div class="form-icono">📋</div>
+                        <div class="form-info">
+                            <div class="form-nombre">Formulario de contacto</div>
+                            <div class="form-desc">Datos básicos para consultas.</div>
+                        </div>
+                        <div class="comision-acciones">
+                            <span>✏️</span>
+                            <span>🗑️</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="#" class="btn-mas">+ Añadir formulario</a>
+            </div>
+
+            <!-- Panel Reseñas -->
+            <div id="reseñas" class="panel oculto">
+                <div class="media-resumen">
+                    <div class="media-numero">4.7 / 5</div>
+                    <div>12 reseñas</div>
+                </div>
+                <div class="reseña-card">
+                    <div class="reseña-header">
+                        <img src="{% static 'recursos/mononoke.jpg' %}" alt="usuario" class="reseña-foto">
+                        <div>
+                            <div class="reseña-user">@cliente1</div>
+                            <div class="reseña-puntuacion">★★★★★ 5 / 5</div>
+                        </div>
+                    </div>
+                    <div class="reseña-fecha">13/04/2026</div>
+                    <div class="reseña-comentario">Increíble trabajo, muy profesional y rápido.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Lógica de tabs con animación ease-in-out
+    const tabs = document.querySelectorAll('.tab');
+    const panels = document.querySelectorAll('.panel');
+
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const tabId = tab.getAttribute('data-tab');
+            // Ocultar todos los paneles con clase oculto
+            panels.forEach(panel => {
+                panel.classList.add('oculto');
+            });
+            // Mostrar el panel seleccionado
+            const activePanel = document.getElementById(tabId);
+            activePanel.classList.remove('oculto');
+            // Marcar tab activo
+            tabs.forEach(t => t.classList.remove('activo'));
+            tab.classList.add('activo');
+        });
+    });
+</script>
+{% endblock %}
