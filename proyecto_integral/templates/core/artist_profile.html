@@ -180,7 +180,7 @@
         display: flex;
     }
     /* Políticas y forms compactos */
-    .policy-card, .form-card {
+    .policy-card {
         background-color: #f9f9f9;
         border: 1px solid #eee;
         border-radius: 8px;
@@ -191,16 +191,16 @@
         gap: 1rem;
         position: relative;
     }
-    .policy-icono, .form-icono {
+    .policy-icono {
         font-size: 1.5rem;
     }
-    .policy-info, .form-info {
+    .policy-info {
         flex: 1;
     }
-    .policy-nombre, .form-nombre {
+    .policy-nombre {
         font-weight: bold;
     }
-    .policy-desc, .form-desc {
+    .policy-desc {
         font-size: 0.8rem;
         color: #666;
     }
@@ -250,6 +250,7 @@
         margin-top: 0.5rem;
         font-size: 0.9rem;
     }
+
 </style>
 {% endblock %}
 
@@ -261,7 +262,7 @@
             <img src="{% static 'recursos/perfil-top.jpeg' %}" alt="Foto perfil">
             <h3>Ana García</h3>
             <p>@anartista</p>
-            <a href="#" class="editar-perfil">✏️ Editar perfil</a>
+            <a href="#" class="editar-perfil" onclick="abrirModalEditarPerfil(); return false;">Editar perfil</a>
         </div>
         <div class="descripcion">
             <p>Ilustradora digital especializada en personajes y entornos fantásticos. Abierta a comisiones.</p>
@@ -280,7 +281,6 @@
             <button class="tab activo" data-tab="comisiones">Comisiones</button>
             <button class="tab" data-tab="portfolio">Portfolio</button>
             <button class="tab" data-tab="politicas">Políticas</button>
-            <button class="tab" data-tab="forms">Forms</button>
             <button class="tab" data-tab="reseñas">Reseñas</button>
         </div>
 
@@ -307,7 +307,7 @@
                         </div>
                     </div>
                 </div>
-                <a href="#" class="btn-mas">+ Añadir comisión</a>
+                <button class="btn-mas" onclick="document.getElementById('modal-comision').style.display='flex'">+ Añadir comisión</button>
             </div>
 
             <!-- Panel Portfolio -->
@@ -335,7 +335,7 @@
                         </div>
                     </div>
                 </div>
-                <a href="#" class="btn-mas">+ Añadir imagen</a>
+                <button class="btn-mas" onclick="document.getElementById('modal-portfolio').style.display='flex'">+ Añadir imagen</button>
             </div>
 
             <!-- Panel Políticas -->
@@ -353,25 +353,7 @@
                         </div>
                     </div>
                 </div>
-                <a href="#" class="btn-mas">+ Añadir política</a>
-            </div>
-
-            <!-- Panel Forms -->
-            <div id="forms" class="panel oculto">
-                <div>
-                    <div class="form-card">
-                        <div class="form-icono">📋</div>
-                        <div class="form-info">
-                            <div class="form-nombre">Formulario de contacto</div>
-                            <div class="form-desc">Datos básicos para consultas.</div>
-                        </div>
-                        <div class="comision-acciones">
-                            <span>✏️</span>
-                            <span>🗑️</span>
-                        </div>
-                    </div>
-                </div>
-                <a href="#" class="btn-mas">+ Añadir formulario</a>
+                <button class="btn-mas" onclick="document.getElementById('modal-politicas').style.display='flex'">+ Añadir política</button>
             </div>
 
             <!-- Panel Reseñas -->
@@ -396,6 +378,296 @@
     </div>
 </div>
 
+
+<!-- Modal / Popup para crear política -->
+<div id="modal-politicas" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background-color: white; width: 80%; max-width: 1000px; border-radius: 20px; padding: 2rem; max-height: 90vh; overflow-y: auto;">
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0;">Políticas</h2>
+            <button onclick="document.getElementById('modal-politicas').style.display='none'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖️</button>
+        </div>
+
+        <form method="POST" action="#">
+            {% csrf_token %}
+
+            <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                <!-- Columna izquierda -->
+                <div style="flex: 1; min-width: 250px;">
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="info_general" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Info general</label>
+                        <textarea id="info_general" name="info_general" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Describe tu política general..."></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="metodos_pago" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Métodos de pago</label>
+                        <textarea id="metodos_pago" name="metodos_pago" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="PayPal, transferencia, etc..."></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="revisiones" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Revisiones</label>
+                        <textarea id="revisiones" name="revisiones" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Número de revisiones gratuitas, coste de revisiones extra..."></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="tiempo_entrega" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Tiempo de entrega</label>
+                        <textarea id="tiempo_entrega" name="tiempo_entrega" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Plazos estimados..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Columna derecha -->
+                <div style="flex: 1; min-width: 250px;">
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="uso" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Uso</label>
+                        <textarea id="uso" name="uso" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Personal, comercial, etc..."></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="derechos_propiedad" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Derechos de propiedad intelectual</label>
+                        <textarea id="derechos_propiedad" name="derechos_propiedad" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Cesión de derechos, atribución, etc..."></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="reembolsos" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Reembolsos</label>
+                        <textarea id="reembolsos" name="reembolsos" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Condiciones para reembolsos..."></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="comunicacion" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Comunicación</label>
+                        <textarea id="comunicacion" name="comunicacion" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Canales de comunicación, tiempos de respuesta..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button type="submit" style="background-color: #333; color: white; padding: 0.8rem 2rem; border: none; border-radius: 30px; cursor: pointer;">Crear política</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- Modal / Popup para subir imagen al portfolio -->
+<div id="modal-portfolio" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background-color: white; width: 50%; max-width: 800px; min-width: 600px; border-radius: 20px; padding: 1.5rem; max-height: 90vh; overflow-y: auto;">
+
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+            <button onclick="document.getElementById('modal-portfolio').style.display='none'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖️</button>
+        </div>
+
+        <form method="POST" action="#" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div style="display: flex; gap: 2rem; align-items: flex-start;">
+
+                <!-- Columna izquierda: imagen (3:4 vertical) -->
+                <div style="flex: 1; text-align: center;">
+                    <label for="imagen_portfolio" style="cursor: pointer;">
+                        <div id="preview-container" style="width: 100%; aspect-ratio: 3 / 4; background-color: #f0f0f0; border: 2px dashed #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <span id="preview-text" style="color: #999;">➕<br>Subir imagen</span>
+                            <img id="preview-image" src="#" alt="Vista previa" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                        </div>
+                    </label>
+                    <input type="file" id="imagen_portfolio" name="imagen" accept="image/*" style="display: none;" onchange="previewImagen(event)">
+                </div>
+
+                <!-- Columna derecha: título y botón -->
+                <div style="flex: 1;">
+                    <h2 style="margin-top: 0; margin-bottom: 1.5rem;">Portfolio</h2>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="titulo_obra" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Título</label>
+                        <input type="text" id="titulo_obra" name="titulo" style="width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Nombre de la pieza...">
+                    </div>
+
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <button type="submit" style="background-color: #333; color: white; padding: 0.8rem 2rem; border: none; border-radius: 30px; cursor: pointer;">Añadir al portfolio</button>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- Modal / Popup para editar perfil -->
+<div id="modal-editar-perfil" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background-color: white; width: 50%; max-width: 800px; min-width: 600px; border-radius: 20px; padding: 1.5rem; max-height: 90vh; overflow-y: auto;">
+
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+            <button onclick="cerrarModalEditarPerfil()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖️</button>
+        </div>
+
+        <form method="POST" action="#" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div style="display: flex; gap: 2rem; align-items: flex-start;">
+
+                <!-- Columna izquierda: foto de perfil circular -->
+                <div style="flex: 0.8; text-align: center;">
+                    <label for="foto_perfil" style="cursor: pointer;">
+                        <div style="position: relative; width: 100%;">
+                            <img id="preview-foto" src="{% static 'recursos/perfil-top.jpeg' %}" alt="Foto perfil" style="width: 100%; aspect-ratio: 1 / 1; border-radius: 50%; object-fit: cover; border: 3px solid #ddd;">
+                            <div style="position: absolute; bottom: 10px; right: 10px; background: #333; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 1rem;">📷</div>
+                        </div>
+                    </label>
+                    <input type="file" id="foto_perfil" name="foto" accept="image/*" style="display: none;" onchange="previewFotoPerfil(event)">
+                    <p style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">Haz clic para cambiar tu foto</p>
+                </div>
+
+                <!-- Columna derecha: formulario -->
+                <div style="flex: 1.2;">
+                    <h2 style="margin-top: 0; margin-bottom: 1.5rem;">Editar perfil</h2>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="nombre" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Nombre</label>
+                        <input type="text" id="nombre" name="nombre" value="Ana García" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="username" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Username</label>
+                        <input type="text" id="username" name="username" value="@anartista" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="descripcion" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Descripción</label>
+                        <textarea id="descripcion" name="descripcion" rows="3" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">Ilustradora digital especializada en personajes y entornos fantásticos. Abierta a comisiones.</textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="enlaces" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Enlaces (redes sociales)</label>
+                        <input type="text" id="enlaces" name="enlaces" value="https://instagram.com/anartista" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Instagram, Twitter, Behance...">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="email" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Email</label>
+                        <input type="email" id="email" name="email" value="ana@medici.com" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="password" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Nueva contraseña (opcional)</label>
+                        <input type="password" id="password" name="password" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Dejar en blanco para no cambiar">
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label for="tarjeta" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Tarjeta (para pagos)</label>
+                        <input type="text" id="tarjeta" name="tarjeta" placeholder="**** **** **** 1234" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">
+                    </div>
+
+                    <div style="text-align: center;">
+                        <button type="submit" style="background-color: #333; color: white; padding: 0.8rem 2rem; border: none; border-radius: 30px; cursor: pointer;">Guardar cambios</button>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- Modal / Popup para crear comisión -->
+<div id="modal-comision" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background-color: white; width: 80%; max-width: 900px; border-radius: 20px; padding: 2rem; max-height: 90vh; overflow-y: auto;">
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0;">Crear comisión</h2>
+            <button onclick="document.getElementById('modal-comision').style.display='none'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖️</button>
+        </div>
+
+        <form method="POST" action="#" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+
+                <!-- Columna izquierda: foto de la comisión -->
+                <div style="flex: 1; min-width: 200px;">
+                    <label for="imagen_comision" style="cursor: pointer;">
+                        <div id="preview-comision-container" style="width: 100%; background-color: #f0f0f0; border: 2px dashed #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; min-height: 200px;">
+                            <span id="preview-comision-text" style="color: #999; padding: 2rem; text-align: center;">➕<br>Subir imagen<br>(opcional)</span>
+                            <img id="preview-comision-image" src="#" alt="Vista previa" style="display: none; width: 100%; height: auto; object-fit: contain;">
+                        </div>
+                    </label>
+                    <input type="file" id="imagen_comision" name="imagen" accept="image/*" style="display: none;" onchange="previewComisionImagen(event)">
+                    <p style="font-size: 0.7rem; color: #999; text-align: center; margin-top: 0.5rem;">La imagen mantendrá sus proporciones originales</p>
+                </div>
+
+                <!-- Columna derecha: campos del formulario -->
+                <div style="flex: 2; min-width: 300px;">
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="nombre_comision" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Nombre de la comisión *</label>
+                        <input type="text" id="nombre_comision" name="nombre" required style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Ej: Retrato realista, Ilustración de personaje...">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="precio" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Precio (€) *</label>
+                        <input type="number" id="precio" name="precio" required step="0.01" min="0" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Ej: 50">
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                        <div style="flex: 1;">
+                            <label for="slots" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Número de slots *</label>
+                            <select id="slots" name="slots" required style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">
+                                <option value="1">1 slot</option>
+                                <option value="2">2 slots</option>
+                                <option value="3">3 slots</option>
+                                <option value="4">4 slots</option>
+                                <option value="5">5 slots</option>
+                                <option value="6">6 slots</option>
+                                <option value="7">7 slots</option>
+                                <option value="8">8 slots</option>
+                                <option value="9">9 slots</option>
+                                <option value="10">10 slots</option>
+                            </select>
+                        </div>
+                        <div style="flex: 1;">
+                            <label for="tiempo_estimado" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Tiempo estimado (días) *</label>
+                            <input type="number" id="tiempo_estimado" name="tiempo_estimado" required min="1" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Ej: 7">
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="descripcion_comision" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Descripción *</label>
+                        <textarea id="descripcion_comision" name="descripcion" rows="3" required style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Describe qué incluye la comisión, estilo, formato de entrega..."></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="politica" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Política asociada *</label>
+                        <select id="politica" name="politica" required style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">
+                            <option value="">Selecciona una política</option>
+                            <option value="1">Pago por adelantado (50%)</option>
+                            <option value="2">Pago completo por adelantado</option>
+                            <option value="3">Reembolso solo antes de empezar</option>
+                        </select>
+                        <p style="font-size: 0.7rem; color: #999; margin-top: 0.3rem;">Las políticas se crean desde el apartado de Políticas</p>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Usos permitidos *</label>
+                        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                            <label style="display: flex; align-items: center; gap: 0.3rem;">
+                                <input type="checkbox" name="usos" value="personal"> Uso personal
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem;">
+                                <input type="checkbox" name="usos" value="comercial"> Uso comercial
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem;">
+                                <input type="checkbox" name="usos" value="monetizar"> Monetizar contenido
+                            </label>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <button type="submit" style="background-color: #333; color: white; padding: 0.8rem 2rem; border: none; border-radius: 30px; cursor: pointer;">Crear comisión</button>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     // Lógica de tabs con animación ease-in-out
     const tabs = document.querySelectorAll('.tab');
@@ -404,17 +676,74 @@
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             const tabId = tab.getAttribute('data-tab');
-            // Ocultar todos los paneles con clase oculto
             panels.forEach(panel => {
                 panel.classList.add('oculto');
             });
-            // Mostrar el panel seleccionado
             const activePanel = document.getElementById(tabId);
             activePanel.classList.remove('oculto');
-            // Marcar tab activo
             tabs.forEach(t => t.classList.remove('activo'));
             tab.classList.add('activo');
         });
     });
+
+    // Funciones para el modal de editar perfil
+    function abrirModalEditarPerfil() {
+        document.getElementById('modal-editar-perfil').style.display = 'flex';
+    }
+
+    function cerrarModalEditarPerfil() {
+        document.getElementById('modal-editar-perfil').style.display = 'none';
+    }
+
+    function previewFotoPerfil(event) {
+        const input = event.target;
+        const preview = document.getElementById('preview-foto');
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Función para previsualizar imagen del portfolio
+    function previewImagen(event) {
+        const input = event.target;
+        const previewContainer = document.getElementById('preview-container');
+        const previewText = document.getElementById('preview-text');
+        const previewImage = document.getElementById('preview-image');
+
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                previewImage.style.display = 'block';
+                previewText.style.display = 'none';
+            }
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            previewImage.style.display = 'none';
+            previewText.style.display = 'flex';
+        }
+    }
+
+    // Cerrar modal si se hace clic fuera del contenido
+    window.onclick = function(event) {
+        const modalPerfil = document.getElementById('modal-editar-perfil');
+        const modalPoliticas = document.getElementById('modal-politicas');
+        const modalPortfolio = document.getElementById('modal-portfolio');
+
+        if (event.target === modalPerfil) {
+            modalPerfil.style.display = 'none';
+        }
+        if (event.target === modalPoliticas) {
+            modalPoliticas.style.display = 'none';
+        }
+        if (event.target === modalPortfolio) {
+            modalPortfolio.style.display = 'none';
+        }
+    }
 </script>
 {% endblock %}
