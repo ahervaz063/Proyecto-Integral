@@ -1,7 +1,7 @@
 # core/forms.py
 from django import forms
-from .models import Comision
-
+from .models import Comision, Usuario
+from django.contrib.auth.forms import UserCreationForm
 
 class ComisionForm(forms.ModelForm):
     class Meta:
@@ -23,3 +23,32 @@ class ComisionForm(forms.ModelForm):
         if slots < 1:
             raise forms.ValidationError("Debe haber al menos 1 slot disponible.")
         return slots
+
+
+class RegistroForm(UserCreationForm):
+    email = forms.EmailField(required=True, label="Correo electrónico")
+    first_name = forms.CharField(required=True, label="Nombre")
+    last_name = forms.CharField(required=True, label="Apellidos")
+    fecha_nacimiento = forms.DateField(
+        required=False,
+        label="Fecha de nacimiento",
+        widget=forms.DateInput(attrs={'type': 'date'})
+    )
+    tipo_usuario = forms.ChoiceField(
+        choices=Usuario.TIPO_USUARIO,
+        widget=forms.HiddenInput(),  # Oculto, lo controlamos con JavaScript
+        initial='cliente'
+    )
+
+    class Meta:
+        model = Usuario
+        fields = ['username', 'first_name', 'last_name', 'email', 'fecha_nacimiento', 'tipo_usuario', 'password1',
+                  'password2']
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.email = self.cleaned_data['email']
+        user.tipo_usuario = self.cleaned_data['tipo_usuario']
+        if commit:
+            user.save()
+        return user

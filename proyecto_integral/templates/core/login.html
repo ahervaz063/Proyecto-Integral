@@ -14,32 +14,39 @@
             </div>
             <p style="margin-top: 20px; color: #666;">Conecta con artistas y mecenas</p>
         </div>
-        
+
         <!-- Columna derecha: formulario -->
         <div style="flex: 1;">
             <h1 style="margin-bottom: 30px;">Iniciar sesión</h1>
-            
-            <form method="POST" action="#">
-                {% csrf_token %}
-                
-                <div style="margin-bottom: 20px;">
-                    <label for="email" style="display: block; margin-bottom: 5px;">Correo electrónico</label>
-                    <input type="email" id="email" name="email" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px;" required>
+
+            <!-- Mostrar errores -->
+            {% if form.errors %}
+                <div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+                    Usuario o contraseña incorrectos. Por favor, inténtalo de nuevo.
                 </div>
-                
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div style="margin-bottom: 20px;">
+                    <label for="username" style="display: block; margin-bottom: 5px;">Usuario o correo electrónico</label>
+                    <input type="text" id="username" name="username" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px;" required>
+                </div>
+
                 <div style="margin-bottom: 25px;">
                     <label for="password" style="display: block; margin-bottom: 5px;">Contraseña</label>
                     <input type="password" id="password" name="password" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px;" required>
                 </div>
-                
+
                 <button type="submit" style="width: 100%; padding: 12px; background-color: #333; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">Iniciar sesión</button>
             </form>
-            
+
             <div style="text-align: center; margin-top: 20px;">
                 <a href="{% url 'registro' %}" style="color: #333;">¿No tienes cuenta? Regístrate aquí.</a>
             </div>
         </div>
-        
+
     </div>
 </div>
 {% endblock %}

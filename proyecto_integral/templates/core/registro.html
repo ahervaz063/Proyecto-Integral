@@ -10,11 +10,11 @@
     <!-- Opciones: Artista o Cliente -->
     <div style="display: flex; gap: 20px; margin-bottom: 30px;">
         <div id="opcion-artista" class="opcion-tipo" data-tipo="artista" style="flex: 1; text-align: center; padding: 20px; border: 2px solid #ccc; border-radius: 10px; cursor: pointer; background-color: #f5f5f5;">
-            <h3>🎨 Artista</h3>
+            <h3>Artista</h3>
             <p>Quiero ofrecer mis servicios</p>
         </div>
         <div id="opcion-cliente" class="opcion-tipo" data-tipo="cliente" style="flex: 1; text-align: center; padding: 20px; border: 2px solid #ccc; border-radius: 10px; cursor: pointer; background-color: white;">
-            <h3>👤 Cliente</h3>
+            <h3>Cliente</h3>
             <p>Quiero contratar artistas</p>
         </div>
     </div>
@@ -22,39 +22,8 @@
     <!-- Formulario de registro -->
     <form method="POST" action="#">
         {% csrf_token %}
-        
-        <div style="margin-bottom: 15px;">
-            <label for="nombre" style="display: block; margin-bottom: 5px;">Nombre completo</label>
-            <input type="text" id="nombre" name="nombre" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" required>
-        </div>
-        
-        <div style="margin-bottom: 15px;">
-            <label for="username" style="display: block; margin-bottom: 5px;">Nombre de usuario</label>
-            <input type="text" id="username" name="username" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" required>
-        </div>
-        
-        <div style="margin-bottom: 15px;">
-            <label for="email" style="display: block; margin-bottom: 5px;">Correo electrónico</label>
-            <input type="email" id="email" name="email" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" required>
-        </div>
-        
-        <div style="margin-bottom: 15px;">
-            <label for="fecha_nacimiento" style="display: block; margin-bottom: 5px;">Fecha de nacimiento</label>
-            <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;">
-        </div>
-        
-        <div style="margin-bottom: 15px;">
-            <label for="password" style="display: block; margin-bottom: 5px;">Contraseña</label>
-            <input type="password" id="password" name="password" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" required>
-        </div>
-        
-        <div style="margin-bottom: 25px;">
-            <label for="password2" style="display: block; margin-bottom: 5px;">Repetir contraseña</label>
-            <input type="password" id="password2" name="password2" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px;" required>
-        </div>
-        
-        <input type="hidden" id="tipo_usuario" name="tipo_usuario" value="cliente">
-        
+        {{ form.as_p }}
+
         <button type="submit" style="width: 100%; padding: 12px; background-color: #333; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">Registrarse</button>
     </form>
     
@@ -67,14 +36,19 @@
 <script>
     const opcionArtista = document.getElementById('opcion-artista');
     const opcionCliente = document.getElementById('opcion-cliente');
-    const tipoUsuario = document.getElementById('tipo_usuario');
-    
+
+    function getTipoUsuarioInput() {
+        return document.querySelector('input[name="tipo_usuario"]');
+    }
+
     opcionArtista.addEventListener('click', function() {
         opcionArtista.style.backgroundColor = '#f5f5f5';
         opcionArtista.style.borderColor = '#333';
         opcionCliente.style.backgroundColor = 'white';
         opcionCliente.style.borderColor = '#ccc';
-        tipoUsuario.value = 'artista';
+
+        const input = getTipoUsuarioInput();
+        if (input) input.value = 'artista';
     });
     
     opcionCliente.addEventListener('click', function() {
@@ -82,7 +56,40 @@
         opcionCliente.style.borderColor = '#333';
         opcionArtista.style.backgroundColor = 'white';
         opcionArtista.style.borderColor = '#ccc';
-        tipoUsuario.value = 'cliente';
+
+        const input = getTipoUsuarioInput();
+        if (input) input.value = 'cliente';
     });
 </script>
+
+<style>
+    /* Mejora la apariencia de los campos del formulario */
+    form p {
+        margin-bottom: 15px;
+    }
+    form label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    form input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-sizing: border-box;
+    }
+    .helptext {
+        font-size: 0.8rem;
+        color: #666;
+        display: block;
+        margin-top: 3px;
+    }
+    .errorlist {
+        color: red;
+        list-style: none;
+        padding-left: 0;
+        margin-bottom: 5px;
+    }
+</style>
 {% endblock %}
