@@ -1,6 +1,6 @@
 # core/forms.py
 from django import forms
-from .models import Comision, Usuario
+from .models import Comision, Usuario, SolicitudEncargo, Resena
 from django.contrib.auth.forms import UserCreationForm
 
 class ComisionForm(forms.ModelForm):
@@ -52,3 +52,34 @@ class RegistroForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class SolicitudEncargoForm(forms.ModelForm):
+    class Meta:
+        model = SolicitudEncargo
+        fields = ['email', 'instagram', 'descripcion_idea', 'referencias']
+        widgets = {
+            'descripcion_idea': forms.Textarea(
+                attrs={'rows': 4, 'placeholder': 'Describe detalladamente tu idea...'}
+            ),
+            'email': forms.EmailInput(attrs={'placeholder': 'tu@email.com'}),
+            'instagram': forms.TextInput(attrs={'placeholder': '@usuario'}),
+        }
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not email:
+            raise forms.ValidationError("El correo electrónico es obligatorio.")
+        return email
+
+
+
+class ResenaForm(forms.ModelForm):
+    class Meta:
+        model = Resena
+        fields = ['puntuacion', 'comentario']
+        widgets = {
+            'puntuacion': forms.Select(choices=[(i, f"{i} estrellas") for i in range(1, 6)]),
+            'comentario': forms.Textarea(
+                attrs={'rows': 4, 'placeholder': 'Cuéntanos tu experiencia con el artista...'}),
+        }

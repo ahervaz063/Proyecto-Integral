@@ -39,4 +39,8 @@ urlpatterns = [
     path('solicitud/<int:solicitud_id>/aceptar/', views.aceptar_solicitud, name='aceptar_solicitud'),
     path('solicitud/<int:solicitud_id>/rechazar/', views.rechazar_solicitud, name='rechazar_solicitud'),
     path('solicitud/<int:solicitud_id>/cancelar/', views.cancelar_solicitud, name='cancelar_solicitud'),
+    path('solicitud/<int:solicitud_id>/finalizar/', views.finalizar_encargo, name='finalizar_encargo'),
+
+    # Reseñas
+    path('resena/crear/<int:solicitud_id>/', views.ResenaCreateView.as_view(), name='resena_create'),
 ]

@@ -1,0 +1,71 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Mis solicitudes{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px; margin: 50px auto; padding: 20px;">
+    
+    <h1 class="mb-4">Mis solicitudes</h1>
+    
+    {% if solicitudes %}
+        {% for solicitud in solicitudes %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <h5>{{ solicitud.comision.nombre }}</h5>
+                        <span class="badge 
+                            {% if solicitud.estado == 'pendiente' %}bg-warning
+                            {% elif solicitud.estado == 'aceptada' %}bg-success
+                            {% elif solicitud.estado == 'rechazada' %}bg-danger
+                            {% elif solicitud.estado == 'finalizada' %}bg-info
+                            {% else %}bg-secondary{% endif %}">
+                            {{ solicitud.get_estado_display }}
+                        </span>
+                    </div>
+                    <p><strong>Artista:</strong> @{{ solicitud.comision.artista.username }}</p>
+                    <p><strong>Precio:</strong> {{ solicitud.comision.precio }}€</p>
+                    <p><strong>Descripción de tu idea:</strong> {{ solicitud.descripcion_idea|truncatewords:20 }}</p>
+                    <p><strong>Solicitado el:</strong> {{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</p>
+                    
+                    {% if solicitud.estado == 'pendiente' %}
+                        <div class="mt-3">
+                            <a href="{% url 'cancelar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Cancelar esta solicitud?')">Cancelar solicitud</a>
+                        </div>
+                    {% elif solicitud.estado == 'finalizada' and not solicitud.reseña %}
+                        <div class="mt-3">
+                            <a href="{% url 'resena_create' solicitud.id %}" class="btn btn-primary btn-sm">Escribir reseña</a>
+                        </div>
+                    {% elif solicitud.estado == 'finalizada' and solicitud.reseña %}
+                        <div class="mt-3">
+                            <span class="badge bg-success">✅ Ya reseñado</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        
+        {% if is_paginated %}
+            <nav>
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page=1">« Primera</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
+                    {% endif %}
+                    <li class="page-item active"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última »</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info">No has realizado ninguna solicitud aún.</div>
+    {% endif %}
+    
+    <div class="mt-3">
+        <a href="{% url 'home' %}" class="btn btn-secondary">Explorar comisiones</a>
+    </div>
+</div>
+{% endblock %}

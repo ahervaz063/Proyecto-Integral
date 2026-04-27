@@ -5,9 +5,10 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView as AuthLoginView
-from core.models import Comision, Usuario, ComisionGuardada, Perfil
-from core.forms import ComisionForm, RegistroForm
+from core.models import Comision, Usuario, ComisionGuardada, Perfil, SolicitudEncargo, Resena
+from core.forms import ComisionForm, RegistroForm, SolicitudEncargoForm, ResenaForm
 from django.db.models import Avg, Count
+from core.mixins import ClientRequiredMixin, ArtistRequiredMixin
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 
@@ -64,6 +65,12 @@ class PerfilArtistaView(TemplateView):
             context['reseñas'] = reseñas
             context['total_reseñas'] = reseñas.count()
             context['media_puntuacion'] = reseñas.aggregate(Avg('puntuacion'))['puntuacion__avg'] or 0
+
+            # Solicitudes recibidas
+            context['solicitudes_recibidas'] = SolicitudEncargo.objects.filter(
+                comision__artista=user
+            ).select_related('cliente', 'comision').order_by('-fecha_solicitud')
+
         return context
 
 
@@ -147,7 +154,7 @@ class EditarPerfilView(TemplateView):
             return reverse_lazy('perfil_cliente', kwargs={'pk': self.request.user.pk})
 
 
-# CRUD DE COMISIONES
+# COMISIONES
 class ComisionListView(ListView):
     model = Comision
     template_name = 'core/comisiones/list.html'
@@ -231,25 +238,146 @@ class PortfolioDeleteView(TemplateView):
 
 
 # SOLICITUDES DE ENCARGO
-class SolicitudCreateView(TemplateView):
+class SolicitudCreateView(ClientRequiredMixin, LoginRequiredMixin, CreateView):
+    model = SolicitudEncargo
+    form_class = SolicitudEncargoForm
     template_name = 'core/solicitudes/form.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        self.comision = get_object_or_404(Comision, id=self.kwargs['comision_id'])
+        return super().dispatch(request, *args, **kwargs)
 
-class SolicitudesArtistaListView(TemplateView):
+    def form_valid(self, form):
+        form.instance.cliente = self.request.user
+        form.instance.comision = self.comision
+        messages.success(self.request, "Solicitud enviada correctamente. El artista te responderá pronto.")
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['comision'] = self.comision
+        return context
+
+    def get_success_url(self):
+        return reverse_lazy('mis_solicitudes_cliente')
+
+
+class SolicitudesArtistaListView(ArtistRequiredMixin, LoginRequiredMixin, ListView):
+    model = SolicitudEncargo
     template_name = 'core/solicitudes/artista_list.html'
+    context_object_name = 'solicitudes'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return SolicitudEncargo.objects.filter(
+            comision__artista=self.request.user
+        ).select_related('cliente', 'comision').order_by('-fecha_solicitud')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Contar solicitudes pendientes
+        context['solicitudes_pendientes'] = self.get_queryset().filter(estado='pendiente').count()
+        return context
 
 
-class SolicitudesClienteListView(TemplateView):
+class SolicitudesClienteListView(ClientRequiredMixin, LoginRequiredMixin, ListView):
+    model = SolicitudEncargo
     template_name = 'core/solicitudes/cliente_list.html'
+    context_object_name = 'solicitudes'
+    paginate_by = 10
+
+    def get_queryset(self):
+        return SolicitudEncargo.objects.filter(
+            cliente=self.request.user
+        ).select_related('comision__artista').order_by('-fecha_solicitud')
 
 
 def aceptar_solicitud(request, solicitud_id):
+    solicitud = get_object_or_404(SolicitudEncargo, id=solicitud_id)
+
+    # Verificar que el usuario es el artista dueño de la comisión o admin
+    if request.user != solicitud.comision.artista and not request.user.is_staff:
+        messages.error(request, "No tienes permiso para realizar esta acción.")
+        return redirect('solicitudes_artista')
+
+    if solicitud.aceptar():
+        messages.success(request, f"Solicitud de {solicitud.cliente.username} aceptada. Slot ocupado.")
+    else:
+        messages.error(request, "No hay slots disponibles para esta comisión.")
+
     return redirect('solicitudes_artista')
 
 
+
 def rechazar_solicitud(request, solicitud_id):
+    solicitud = get_object_or_404(SolicitudEncargo, id=solicitud_id)
+
+    if request.user != solicitud.comision.artista and not request.user.is_staff:
+        messages.error(request, "No tienes permiso para realizar esta acción.")
+        return redirect('solicitudes_artista')
+
+    solicitud.rechazar()
+    messages.success(request, f"Solicitud de {solicitud.cliente.username} rechazada.")
     return redirect('solicitudes_artista')
 
 
 def cancelar_solicitud(request, solicitud_id):
+    solicitud = get_object_or_404(SolicitudEncargo, id=solicitud_id)
+
+    if request.user != solicitud.cliente and not request.user.is_staff:
+        messages.error(request, "No tienes permiso para realizar esta acción.")
+        return redirect('mis_solicitudes_cliente')
+
+    if solicitud.cancelar():
+        messages.success(request, "Solicitud cancelada correctamente.")
+    else:
+        messages.error(request, "Solo puedes cancelar solicitudes pendientes.")
+
     return redirect('mis_solicitudes_cliente')
+
+
+def finalizar_encargo(request, solicitud_id):
+    solicitud = get_object_or_404(SolicitudEncargo, id=solicitud_id)
+
+    if request.user != solicitud.comision.artista and not request.user.is_staff:
+        messages.error(request, "No tienes permiso para realizar esta acción.")
+        return redirect('solicitudes_artista')
+
+    if solicitud.finalizar():
+        messages.success(request, "Encargo finalizado. Espera la reseña del cliente.")
+    else:
+        messages.error(request, "Solo puedes finalizar encargos aceptados.")
+
+    return redirect('solicitudes_artista')
+
+#RESEÑAS
+class ResenaCreateView(LoginRequiredMixin, CreateView):
+    model = Resena
+    form_class = ResenaForm
+    template_name = 'core/resenas/form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.solicitud = get_object_or_404(SolicitudEncargo, id=self.kwargs['solicitud_id'])
+        # Verificar que la solicitud está finalizada
+        if self.solicitud.estado != 'finalizada':
+            messages.error(request, "Solo puedes dejar reseña en encargos finalizados.")
+            return redirect('mis_solicitudes_cliente')
+        # Verificar que el usuario es el cliente de la solicitud
+        if self.solicitud.cliente != request.user:
+            messages.error(request, "No tienes permiso para reseñar este encargo.")
+            return redirect('mis_solicitudes_cliente')
+        # Verificar que no existe ya una reseña
+        if hasattr(self.solicitud, 'reseña'):
+            messages.error(request, "Ya has dejado una reseña para este encargo.")
+            return redirect('mis_solicitudes_cliente')
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.cliente = self.request.user
+        form.instance.artista = self.solicitud.comision.artista
+        form.instance.solicitud = self.solicitud
+        messages.success(self.request, "¡Gracias por tu reseña! Ayuda a otros usuarios.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('mis_solicitudes_cliente')

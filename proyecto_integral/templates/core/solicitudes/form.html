@@ -1,0 +1,47 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Solicitar encargo - {{ comision.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 50px auto; padding: 20px;">
+    
+    <h1>Solicitar encargo</h1>
+    <h3 class="mb-4">{{ comision.nombre }} - {{ comision.artista.username }}</h3>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>Información de la comisión</h5>
+            <p><strong>Precio:</strong> {{ comision.precio }}€</p>
+            <p><strong>Plazo estimado:</strong> {{ comision.tiempo_estimado }} días</p>
+            <p><strong>Descripción:</strong> {{ comision.descripcion }}</p>
+        </div>
+    </div>
+    
+    <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        {{ form.as_p }}
+        
+        <button type="submit" class="btn btn-primary">Enviar solicitud</button>
+        <a href="javascript:history.back()" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+
+<style>
+    form p {
+        margin-bottom: 1rem;
+    }
+    form label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 0.3rem;
+    }
+    form input, form textarea, form select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+</style>
+{% endblock %}

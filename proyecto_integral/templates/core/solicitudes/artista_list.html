@@ -1,0 +1,72 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Solicitudes recibidas{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 1000px; margin: 50px auto; padding: 20px;">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Solicitudes recibidas</h1>
+        <span class="badge bg-warning">Pendientes: {{ solicitudes_pendientes }}</span>
+    </div>
+    
+    {% if solicitudes %}
+        {% for solicitud in solicitudes %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <h5>{{ solicitud.comision.nombre }}</h5>
+                        <span class="badge 
+                            {% if solicitud.estado == 'pendiente' %}bg-warning
+                            {% elif solicitud.estado == 'aceptada' %}bg-success
+                            {% elif solicitud.estado == 'rechazada' %}bg-danger
+                            {% elif solicitud.estado == 'finalizada' %}bg-info
+                            {% else %}bg-secondary{% endif %}">
+                            {{ solicitud.get_estado_display }}
+                        </span>
+                    </div>
+                    <p><strong>Cliente:</strong> @{{ solicitud.cliente.username }}</p>
+                    <p><strong>Email:</strong> {{ solicitud.email }}</p>
+                    <p><strong>Instagram:</strong> {{ solicitud.instagram|default:"No especificado" }}</p>
+                    <p><strong>Descripción:</strong> {{ solicitud.descripcion_idea }}</p>
+                    <p><strong>Fecha:</strong> {{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</p>
+                    
+                    {% if solicitud.estado == 'pendiente' %}
+                        <div class="mt-3">
+                            <a href="{% url 'aceptar_solicitud' solicitud.id %}" class="btn btn-success btn-sm" onclick="return confirm('¿Aceptar esta solicitud? Se ocupará un slot.')">✅ Aceptar</a>
+                            <a href="{% url 'rechazar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Rechazar esta solicitud?')">❌ Rechazar</a>
+                        </div>
+                    {% elif solicitud.estado == 'aceptada' %}
+                        <div class="mt-3">
+                            <a href="{% url 'finalizar_encargo' solicitud.id %}" class="btn btn-info btn-sm" onclick="return confirm('¿Marcar como finalizado? El cliente podrá dejarte una reseña.')">🎉 Finalizar encargo</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        
+        {% if is_paginated %}
+            <nav>
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page=1">« Primera</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
+                    {% endif %}
+                    <li class="page-item active"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última »</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info">No has recibido ninguna solicitud aún.</div>
+    {% endif %}
+    
+    <div class="mt-3">
+        <a href="{% url 'perfil_artista' user.id %}" class="btn btn-secondary">Volver a mi perfil</a>
+    </div>
+</div>
+{% endblock %}

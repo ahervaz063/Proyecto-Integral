@@ -1,0 +1,51 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Dejar reseña - Medici{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 600px; margin: 50px auto; padding: 20px;">
+    
+    <h1 class="text-center mb-4">Dejar reseña</h1>
+    
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5>{{ solicitud.comision.nombre }}</h5>
+            <p><strong>Artista:</strong> @{{ solicitud.comision.artista.username }}</p>
+            <p><strong>Precio:</strong> {{ solicitud.comision.precio }}€</p>
+        </div>
+    </div>
+    
+    <form method="POST">
+        {% csrf_token %}
+        
+        {{ form.as_p }}
+        
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary">Enviar reseña</button>
+            <a href="{% url 'mis_solicitudes_cliente' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<style>
+    form p {
+        margin-bottom: 1rem;
+    }
+    form label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 0.3rem;
+    }
+    form input, form textarea, form select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    .helptext {
+        font-size: 0.8rem;
+        color: #666;
+    }
+</style>
+{% endblock %}
