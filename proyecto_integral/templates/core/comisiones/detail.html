@@ -17,6 +17,19 @@
             
             {% if user.is_authenticated and user.es_cliente %}
             <a href="{% url 'solicitud_create' comision.pk %}" class="btn btn-success">Solicitar encargo</a>
+
+                <form method="POST" action="{% url 'guardar_comision' comision.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    {% if comision.id in comisiones_guardadas_ids %}
+                        <button type="submit" class="btn btn-danger">
+                            ❤️ Eliminar de favoritos
+                        </button>
+                    {% else %}
+                        <button type="submit" class="btn btn-outline-danger">
+                            🤍 Guardar en favoritos
+                        </button>
+                    {% endif %}
+                </form>
             {% endif %}
             
             {% if user == comision.artista or user.is_staff %}

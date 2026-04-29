@@ -1,0 +1,295 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Buscar comisiones - Medici{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filtros-bar {
+        background-color: #f8f9fa;
+        padding: 1rem 0;
+        border-bottom: 1px solid #ddd;
+        margin-bottom: 2rem;
+    }
+    .filtros-container {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+    }
+    .filtro-btn {
+        background-color: white;
+        border: 1px solid #ccc;
+        padding: 0.5rem 1.5rem;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    .filtro-btn:hover, .filtro-btn.activo {
+        background-color: #333;
+        color: white;
+        border-color: #333;
+    }
+    .dropdown-contenido {
+        display: none;
+        position: absolute;
+        background-color: white;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+        z-index: 1;
+        border-radius: 8px;
+        margin-top: 0.5rem;
+    }
+    .dropdown-contenido a {
+        color: #333;
+        padding: 0.5rem 1rem;
+        display: block;
+        text-decoration: none;
+    }
+    .dropdown-contenido a:hover {
+        background-color: #f5f5f5;
+    }
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    .comision-card {
+        background-color: white;
+        border: 1px solid #eee;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.3s, box-shadow 0.3s;
+        cursor: pointer;
+    }
+    .comision-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    .comision-img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+    .comision-info {
+        padding: 1rem;
+    }
+    .comision-titulo {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 0.3rem;
+    }
+    .comision-artista {
+        color: #666;
+        font-size: 0.85rem;
+        margin-bottom: 0.5rem;
+    }
+    .comision-precio {
+        font-weight: bold;
+        color: #28a745;
+        font-size: 1.2rem;
+    }
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-contenido {
+        background-color: white;
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow-y: auto;
+        border-radius: 20px;
+        padding: 2rem;
+    }
+    .cerrar-modal {
+        float: right;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Barra de filtros -->
+<div class="filtros-bar">
+    <div class="container">
+        <div class="filtros-container">
+            <!-- Desplegable Categorías -->
+    <div class="dropdown">
+        <button class="filtro-btn dropdown-toggle" onclick="toggleDropdown('categorias-dropdown')">
+            📂 Categorías {% if categoria_seleccionada %}✓{% endif %}
+        </button>
+        <div id="categorias-dropdown" class="dropdown-contenido">
+            <a href="?{% if precio_seleccionado %}precio={{ precio_seleccionado }}&{% endif %}{% if valoracion_seleccionada %}valoracion={{ valoracion_seleccionada }}&{% endif %}">Todas</a>
+            <a href="?categoria=ilustracion{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Ilustración</a>
+            <a href="?categoria=diseno{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Diseño</a>
+            <a href="?categoria=diseno_grafico{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Diseño Gráfico</a>
+            <a href="?categoria=pixel_art{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Pixel Art</a>
+            <a href="?categoria=3d{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">3D</a>
+            <a href="?categoria=poster{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Póster</a>
+            <a href="?categoria=concept_art{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Concept Art</a>
+            <a href="?categoria=retrato{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Retrato</a>
+            <a href="?categoria=bg{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Background</a>
+            <a href="?categoria=personaje{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Personaje</a>
+            <a href="?categoria=videojuego{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Videojuego</a>
+            <a href="?categoria=libro{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Libro</a>
+            <a href="?categoria=branding{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Branding</a>
+            <a href="?categoria=comic_manga{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Cómic / Manga</a>
+        </div>
+    </div>
+            
+            <!-- Desplegable Precio -->
+            <div class="dropdown">
+                <button class="filtro-btn dropdown-toggle" onclick="toggleDropdown('precio-dropdown')">
+                    💰 Precio {% if precio_seleccionado %}✓{% endif %}
+                </button>
+                <div id="precio-dropdown" class="dropdown-contenido">
+                    <a href="?{% if q %}q={{ q }}&{% endif %}{% if categoria_seleccionada %}categoria={{ categoria_seleccionada }}&{% endif %}">Por defecto</a>
+                    <a href="?{% if q %}q={{ q }}&{% endif %}{% if categoria_seleccionada %}categoria={{ categoria_seleccionada }}&{% endif %}precio=asc">Menor precio</a>
+                    <a href="?{% if q %}q={{ q }}&{% endif %}{% if categoria_seleccionada %}categoria={{ categoria_seleccionada }}&{% endif %}precio=desc">Mayor precio</a>
+                </div>
+            </div>
+            
+            <!-- Desplegable Valoraciones -->
+            <div class="dropdown">
+                <button class="filtro-btn dropdown-toggle" onclick="toggleDropdown('valoracion-dropdown')">
+                    ⭐ Valoración {% if valoracion_seleccionada %}✓{% endif %}
+                </button>
+                <div id="valoracion-dropdown" class="dropdown-contenido">
+                    <a href="?{% if q %}q={{ q }}&{% endif %}{% if categoria_seleccionada %}categoria={{ categoria_seleccionada }}&{% endif %}{% if precio_seleccionado %}precio={{ precio_seleccionado }}&{% endif %}">Todas</a>
+                    <a href="?{% if q %}q={{ q }}&{% endif %}{% if categoria_seleccionada %}categoria={{ categoria_seleccionada }}&{% endif %}{% if precio_seleccionado %}precio={{ precio_seleccionado }}&{% endif %}valoracion=4">4+ estrellas</a>
+                    <a href="?{% if q %}q={{ q }}&{% endif %}{% if categoria_seleccionada %}categoria={{ categoria_seleccionada }}&{% endif %}{% if precio_seleccionado %}precio={{ precio_seleccionado }}&{% endif %}valoracion=3.5">3.5+ estrellas</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Listado de comisiones -->
+<div class="container py-4">
+    <h2 class="text-center mb-4">Comisiones disponibles</h2>
+    
+    {% if comisiones %}
+        <div class="row">
+            {% for comision in comisiones %}
+                <div class="col-md-3 col-sm-6 mb-4">
+                    <div class="comision-card" onclick="abrirModalComision({{ comision.id }})">
+                        {% if comision.imagen %}
+                            <img src="{{ comision.imagen.url }}" alt="{{ comision.nombre }}" class="comision-img">
+                        {% else %}
+                            <img src="{% static 'images/default-commission.jpg' %}" alt="{{ comision.nombre }}" class="comision-img">
+                        {% endif %}
+                        <div class="comision-info">
+                            <div class="comision-titulo">{{ comision.nombre }}</div>
+                            <div class="comision-artista">🎨 @{{ comision.artista.username }}</div>
+                            <div class="comision-precio">{{ comision.precio }}€</div>
+                            <!-- Guardar comisión SÓLO a clientes logeados -->
+                            {% if user.is_authenticated and user.es_cliente %}
+                                <form method="POST" action="{% url 'guardar_comision' comision.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    {% if comision.id in comisiones_guardadas_ids %}
+                                        <button type="submit" class="btn btn-sm btn-danger mt-2">❤️ Guardado</button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger mt-2">🤍 Guardar</button>
+                                    {% endif %}
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Paginación -->
+        {% if is_paginated %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page=1{% if q %}&q={{ q }}{% endif %}{% if categoria_seleccionada %}&categoria={{ categoria_seleccionada }}{% endif %}">« Primera</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if categoria_seleccionada %}&categoria={{ categoria_seleccionada }}{% endif %}">Anterior</a></li>
+                    {% endif %}
+                    <li class="page-item active"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+                    {% if page_obj.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if categoria_seleccionada %}&categoria={{ categoria_seleccionada }}{% endif %}">Siguiente</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if categoria_seleccionada %}&categoria={{ categoria_seleccionada }}{% endif %}">Última »</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <div class="text-center py-5">
+            <h4>No hay comisiones disponibles</h4>
+            <p>Próximamente habrá más opciones.</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modales para cada comisión (se cargan dinámicamente) -->
+<div id="modal-comision" class="modal">
+    <div class="modal-contenido">
+        <span class="cerrar-modal" onclick="cerrarModal()">&times;</span>
+        <div id="modal-body">
+            <!-- Contenido cargado dinámicamente con AJAX -->
+            <p>Cargando...</p>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    function toggleDropdown(id) {
+        var dropdown = document.getElementById(id);
+        if (dropdown.style.display === 'block') {
+            dropdown.style.display = 'none';
+        } else {
+            // Cerrar todos los dropdowns
+            document.querySelectorAll('.dropdown-contenido').forEach(function(el) {
+                el.style.display = 'none';
+            });
+            dropdown.style.display = 'block';
+        }
+    }
+    
+    // Cerrar dropdowns al hacer clic fuera
+    window.onclick = function(event) {
+        if (!event.target.matches('.dropdown-toggle')) {
+            document.querySelectorAll('.dropdown-contenido').forEach(function(el) {
+                el.style.display = 'none';
+            });
+        }
+    }
+    
+    function abrirModalComision(comisionId) {
+        var modal = document.getElementById('modal-comision');
+        var modalBody = document.getElementById('modal-body');
+        
+        // Cargar contenido dinámicamente (AJAX)
+        fetch(`/comision/${comisionId}/detalle-modal/`)
+            .then(response => response.text())
+            .then(html => {
+                modalBody.innerHTML = html;
+                modal.style.display = 'flex';
+            })
+            .catch(error => {
+                modalBody.innerHTML = '<p>Error al cargar la información.</p>';
+                modal.style.display = 'flex';
+            });
+    }
+    
+    function cerrarModal() {
+        document.getElementById('modal-comision').style.display = 'none';
+    }
+</script>
+{% endblock %}

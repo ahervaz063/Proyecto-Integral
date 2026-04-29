@@ -4,10 +4,17 @@ from .models import Comision, Usuario, SolicitudEncargo, Resena
 from django.contrib.auth.forms import UserCreationForm
 
 class ComisionForm(forms.ModelForm):
+    categorias_seleccionadas = forms.MultipleChoiceField(
+        choices=Comision.CATEGORIAS_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Categorías (máximo 3)"
+    )
+
     class Meta:
         model = Comision
         fields = ['nombre', 'precio', 'slots', 'tiempo_estimado', 'descripcion', 'imagen', 'politica',
-                  'usos_permitidos']
+                  'usos_permitidos', 'categorias']
         widgets = {
             'descripcion': forms.Textarea(attrs={'rows': 4}),
         }
@@ -23,6 +30,22 @@ class ComisionForm(forms.ModelForm):
         if slots < 1:
             raise forms.ValidationError("Debe haber al menos 1 slot disponible.")
         return slots
+
+    def clean_categorias_seleccionadas(self):
+        categorias = self.cleaned_data.get('categorias_seleccionadas', [])
+        if len(categorias) > 3:
+            raise forms.ValidationError("Máximo 3 categorías por comisión.")
+        return categorias
+
+    def save(self, commit=True):
+        comision = super().save(commit=False)
+        if commit:
+            comision.save()
+            # Guardar categorías como string separado por comas
+            categorias = self.cleaned_data.get('categorias_seleccionadas', [])
+            comision.categorias = ','.join(categorias)
+            comision.save()
+        return comision
 
 
 class RegistroForm(UserCreationForm):

@@ -131,6 +131,23 @@ class Comision(models.Model):
         ('todos', 'Todos los usos'),
     )
 
+    CATEGORIAS_CHOICES = (
+        ('ilustracion', 'Ilustración'),
+        ('diseno', 'Diseño'),
+        ('diseno_grafico', 'Diseño Gráfico'),
+        ('pixel_art', 'Pixel Art'),
+        ('3d', '3D'),
+        ('poster', 'Póster'),
+        ('concept_art', 'Concept Art'),
+        ('retrato', 'Retrato'),
+        ('BG', 'Background'),
+        ('personaje', 'Personaje'),
+        ('videojuego', 'Videojuego'),
+        ('libro', 'Libro'),
+        ('branding', 'Branding'),
+        ('comic_manga', 'Cómic / Manga'),
+    )
+
     artista = models.ForeignKey(
         Usuario,
         on_delete=models.CASCADE,
@@ -139,6 +156,14 @@ class Comision(models.Model):
         limit_choices_to={'tipo_usuario': 'artista'},
         verbose_name="Artista"
     )
+
+    categorias = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="Categorías (separadas por coma, máx 3)",
+        help_text="Ej: ilustracion,personaje,retrato"
+    )
+
     nombre = models.CharField(max_length=200, verbose_name="Nombre de la comisión")
     precio = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Precio (€)")
     slots = models.PositiveSmallIntegerField(default=1, verbose_name="Número de slots disponibles")

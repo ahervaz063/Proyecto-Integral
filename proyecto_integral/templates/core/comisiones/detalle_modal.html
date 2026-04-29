@@ -1,0 +1,70 @@
+{% load static %}
+
+<div style="display: flex; flex-direction: column; gap: 1rem;">
+    <h2>{{ comision.nombre }}</h2>
+
+    {% if comision.imagen %}
+        <img src="{{ comision.imagen.url }}" alt="{{ comision.nombre }}" style="width: 100%; border-radius: 12px;">
+    {% endif %}
+
+    <p><strong>Artista:</strong> @{{ comision.artista.username }}</p>
+    <p><strong>Precio:</strong> {{ comision.precio }}€</p>
+    <p><strong>Plazo estimado:</strong> {{ comision.tiempo_estimado }} días</p>
+    <p><strong>Descripción:</strong> {{ comision.descripcion }}</p>
+
+    {% if comision.politica %}
+        <div style="background-color: #f5f5f5; padding: 1rem; border-radius: 12px;">
+            <strong>📋 Política del artista:</strong>
+            <p><strong>{{ comision.politica.nombre }}</strong></p>
+            <p>{{ comision.politica.info_general|truncatewords:30 }}</p>
+            <details>
+                <summary>Ver política completa</summary>
+                <p><strong>Métodos de pago:</strong> {{ comision.politica.metodos_pago }}</p>
+                <p><strong>Revisiones:</strong> {{ comision.politica.revisiones }}</p>
+                <p><strong>Uso permitido:</strong> {{ comision.politica.uso }}</p>
+                <p><strong>Derechos de propiedad:</strong> {{ comision.politica.derechos_propiedad }}</p>
+                <p><strong>Reembolsos:</strong> {{ comision.politica.reembolsos }}</p>
+                <p><strong>Comunicación:</strong> {{ comision.politica.comunicacion }}</p>
+            </details>
+        </div>
+    {% endif %}
+
+    <p><strong>✅ Usos permitidos:</strong> {{ comision.get_usos_permitidos_display }}</p>
+
+    <!-- ✅ SOLO mostrar formulario si el usuario es cliente y está logueado ✅ -->
+    {% if user.is_authenticated and user.es_cliente %}
+        <form method="POST" action="{% url 'solicitud_create' comision.id %}" enctype="multipart/form-data" style="margin-top: 1rem;">
+            {% csrf_token %}
+            <div style="margin-bottom: 1rem;">
+                <label for="email" style="display: block; font-weight: bold;">Correo electrónico *</label>
+                <input type="email" id="email" name="email" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 5px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label for="instagram" style="display: block; font-weight: bold;">Instagram (opcional)</label>
+                <input type="text" id="instagram" name="instagram" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 5px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label for="descripcion_idea" style="display: block; font-weight: bold;">Descripción detallada de tu idea *</label>
+                <textarea id="descripcion_idea" name="descripcion_idea" rows="4" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 5px;"></textarea>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label for="referencias" style="display: block; font-weight: bold;">Imágenes de referencia</label>
+                <input type="file" id="referencias" name="referencias" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 5px;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" name="acepto_terminos" required>
+                    He leído y acepto los términos y la política del artista *
+                </label>
+            </div>
+            <button type="submit" style="width: 100%; padding: 0.8rem; background-color: #333; color: white; border: none; border-radius: 30px; cursor: pointer;">
+                📩 Solicitar encargo
+            </button>
+        </form>
+    {% else %}
+        <div class="alert alert-info" style="background-color: #e7f3ff; padding: 1rem; border-radius: 8px; text-align: center;">
+            <p>🔒 Para solicitar este encargo, necesitas <a href="{% url 'login' %}" style="color: #007bff;">iniciar sesión como cliente</a>.</p>
+            <p>¿No tienes cuenta? <a href="{% url 'registro' %}" style="color: #007bff;">Regístrate aquí</a></p>
+        </div>
+    {% endif %}
+</div>

@@ -1,16 +1,17 @@
 # core/views.py
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView, TemplateView,View
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView as AuthLoginView
 from core.models import Comision, Usuario, ComisionGuardada, Perfil, SolicitudEncargo, Resena
 from core.forms import ComisionForm, RegistroForm, SolicitudEncargoForm, ResenaForm
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Q
 from core.mixins import ClientRequiredMixin, ArtistRequiredMixin
 
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import JsonResponse
 
 # VISTAS PÚBLICAS
 class HomeView(TemplateView):
@@ -179,41 +180,84 @@ class ComisionDetailView(DetailView):
     context_object_name = 'comision'
 
 
-class ComisionCreateView(CreateView):
-    model = Comision
-    form_class = ComisionForm
-    template_name = 'core/comisiones/form.html'
+class ComisionCreateView(ArtistRequiredMixin, View):
+    """Vista para crear comisión desde el popup (solo POST)"""
 
-    def form_valid(self, form):
-        form.instance.artista = self.request.user
-        messages.success(self.request, "Comisión creada correctamente.")
-        return super().form_valid(form)
+    def post(self, request, *args, **kwargs):
+        form = ComisionForm(request.POST, request.FILES)
 
-    def get_success_url(self):
-        return reverse_lazy('perfil_artista', kwargs={'artista_id': self.request.user.id})
+        if form.is_valid():
+            comision = form.save(commit=False)
+            comision.artista = request.user
+            comision.save()
 
+            # Guardar categorías
+            categorias = request.POST.getlist('categorias_seleccionadas')
+            if len(categorias) > 3:
+                messages.error(request, "Máximo 3 categorías por comisión.")
+                return redirect('perfil_artista', pk=request.user.id)
+            comision.categorias = ','.join(categorias)
+            comision.save()
 
-class ComisionUpdateView(UpdateView):
-    model = Comision
-    form_class = ComisionForm
-    template_name = 'core/comisiones/form.html'
+            messages.success(request, "Comisión creada correctamente.")
+        else:
+            messages.error(request, "Error al crear la comisión. Revisa los campos.")
 
-    def form_valid(self, form):
-        messages.success(self.request, "Comisión actualizada correctamente.")
-        return super().form_valid(form)
+        return redirect('perfil_artista', pk=request.user.id)
 
-    def get_success_url(self):
-        return reverse_lazy('perfil_artista', kwargs={'artista_id': self.request.user.id})
+    def get(self, request, *args, **kwargs):
+        # Redirigir si alguien intenta acceder por GET
+        return redirect('perfil_artista', pk=request.user.id)
 
+class ComisionUpdateView(ArtistRequiredMixin, View):
+    """Vista para editar comisión desde el popup (solo POST)"""
 
-class ComisionDeleteView(DeleteView):
-    model = Comision
-    template_name = 'core/comisiones/confirm_delete.html'
+    def post(self, request, *args, **kwargs):
+        comision = get_object_or_404(Comision, id=kwargs['pk'])
 
-    def get_success_url(self):
-        messages.success(self.request, "Comisión eliminada correctamente.")
-        return reverse_lazy('perfil_artista', kwargs={'artista_id': self.request.user.id})
+        # Verificar permisos
+        if comision.artista != request.user and not request.user.is_staff:
+            messages.error(request, "No tienes permiso para editar esta comisión.")
+            return redirect('perfil_artista', pk=request.user.id)
 
+        form = ComisionForm(request.POST, request.FILES, instance=comision)
+
+        if form.is_valid():
+            comision = form.save()
+
+            # Actualizar categorías
+            categorias = request.POST.getlist('categorias_seleccionadas')
+            if len(categorias) > 3:
+                messages.error(request, "Máximo 3 categorías por comisión.")
+                return redirect('perfil_artista', pk=request.user.id)
+            comision.categorias = ','.join(categorias)
+            comision.save()
+
+            messages.success(request, "Comisión actualizada correctamente.")
+        else:
+            messages.error(request, "Error al actualizar la comisión.")
+
+        return redirect('perfil_artista', pk=request.user.id)
+
+    def get(self, request, *args, **kwargs):
+        return redirect('perfil_artista', pk=request.user.id)
+
+class ComisionDeleteView(ArtistRequiredMixin, View):
+    """Vista para eliminar comisión (solo POST)"""
+
+    def post(self, request, *args, **kwargs):
+        comision = get_object_or_404(Comision, id=kwargs['pk'])
+
+        if comision.artista != request.user and not request.user.is_staff:
+            messages.error(request, "No tienes permiso para eliminar esta comisión.")
+            return redirect('perfil_artista', pk=request.user.id)
+
+        comision.delete()
+        messages.success(request, "Comisión eliminada correctamente.")
+        return redirect('perfil_artista', pk=request.user.id)
+
+    def get(self, request, *args, **kwargs):
+        return redirect('perfil_artista', pk=request.user.id)
 
 # POLÍTICAS
 class PoliticaCreateView(TemplateView):
@@ -238,7 +282,7 @@ class PortfolioDeleteView(TemplateView):
 
 
 # SOLICITUDES DE ENCARGO
-class SolicitudCreateView(ClientRequiredMixin, LoginRequiredMixin, CreateView):
+class SolicitudCreateView(ClientRequiredMixin, CreateView):
     model = SolicitudEncargo
     form_class = SolicitudEncargoForm
     template_name = 'core/solicitudes/form.html'
@@ -381,3 +425,85 @@ class ResenaCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse_lazy('mis_solicitudes_cliente')
+
+#GUARDAR COMISIÓN
+class GuardarComisionView(ClientRequiredMixin, View):
+    """Vista para guardar o eliminar una comisión de favoritos (usando POST)"""
+
+    def post(self, request, comision_id):
+        comision = get_object_or_404(Comision, id=comision_id)
+        guardado = ComisionGuardada.objects.filter(cliente=request.user, comision=comision)
+
+        if guardado.exists():
+            # Si ya está guardada, la eliminamos
+            guardado.delete()
+            messages.success(request, f"Comisión '{comision.nombre}' eliminada de favoritos.")
+        else:
+            # Si no está guardada, la añadimos
+            ComisionGuardada.objects.create(cliente=request.user, comision=comision)
+            messages.success(request, f"Comisión '{comision.nombre}' guardada en favoritos.")
+
+        # Redirigir a la página anterior
+        return redirect(request.META.get('HTTP_REFERER', 'home'))
+
+
+#BÚSQUEDA
+class BuscarComisionesView(ListView):
+    model = Comision
+    template_name = 'core/buscar_comisiones.html'
+    context_object_name = 'comisiones'
+    paginate_by = 12
+
+    def get_queryset(self):
+        queryset = Comision.objects.filter(activa=True)
+
+        # Búsqueda por texto
+        q = self.request.GET.get('q', '')
+        if q:
+            queryset = queryset.filter(
+                Q(nombre__icontains=q) |
+                Q(descripcion__icontains=q) |
+                Q(artista__username__icontains=q)
+            )
+
+        # Filtro por categoría (usando el campo usos_permitidos como categoría)
+        categoria = self.request.GET.get('categoria', '')
+        if categoria:
+            queryset = queryset.filter(categorias__icontains=categoria)
+
+        # Filtro por precio
+        precio_order = self.request.GET.get('precio', '')
+        if precio_order == 'asc':
+            queryset = queryset.order_by('precio')
+        elif precio_order == 'desc':
+            queryset = queryset.order_by('-precio')
+
+        # Filtro por valoraciones (media de reseñas del artista)
+        valoracion = self.request.GET.get('valoracion', '')
+        if valoracion:
+            queryset = queryset.annotate(
+                media_artista=Avg('artista__reseñas_recibidas__puntuacion')
+            ).filter(media_artista__gte=float(valoracion))
+
+        return queryset.select_related('artista').prefetch_related('artista__perfil')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['categorias'] = Comision.CATEGORIAS_CHOICES
+        context['q'] = self.request.GET.get('q', '')
+        context['categoria_seleccionada'] = self.request.GET.get('categoria', '')
+        context['precio_seleccionado'] = self.request.GET.get('precio', '')
+        context['valoracion_seleccionada'] = self.request.GET.get('valoracion', '')
+
+        # Añadir comisiones guardadas para clientes logueados
+        if self.request.user.is_authenticated and self.request.user.es_cliente():
+            guardadas = ComisionGuardada.objects.filter(cliente=self.request.user).values_list('comision_id', flat=True)
+            context['comisiones_guardadas_ids'] = list(guardadas)
+        else:
+            context['comisiones_guardadas_ids'] = []
+        return context
+
+#MODAL DETALLE COMISIÓN
+def comision_detalle_modal(request, comision_id):
+    comision = get_object_or_404(Comision, id=comision_id, activa=True)
+    return render(request, 'core/comisiones/detalle_modal.html', {'comision': comision})

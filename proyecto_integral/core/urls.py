@@ -22,6 +22,7 @@ urlpatterns = [
     path('comisiones/crear/', views.ComisionCreateView.as_view(), name='comision_create'),
     path('comisiones/<int:pk>/editar/', views.ComisionUpdateView.as_view(), name='comision_update'),
     path('comisiones/<int:pk>/eliminar/', views.ComisionDeleteView.as_view(), name='comision_delete'),
+    path('comision/<int:comision_id>/guardar/', views.GuardarComisionView.as_view(), name='guardar_comision'),
 
     # Políticas
     path('politicas/crear/', views.PoliticaCreateView.as_view(), name='politica_create'),
@@ -43,4 +44,8 @@ urlpatterns = [
 
     # Reseñas
     path('resena/crear/<int:solicitud_id>/', views.ResenaCreateView.as_view(), name='resena_create'),
+
+    #Búsqueda
+    path('buscar/comisiones/', views.BuscarComisionesView.as_view(), name='buscar_comisiones'),
+    path('comision/<int:comision_id>/detalle-modal/', views.comision_detalle_modal, name='comision_detalle_modal'),
 ]
