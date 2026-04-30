@@ -175,89 +175,177 @@ class ComisionListView(ListView):
 
 
 class ComisionDetailView(DetailView):
-    model = Comision
-    template_name = 'core/comisiones/detail.html'
-    context_object_name = 'comision'
+    """Vista AJAX para obtener datos de una comisión (para editar)"""
+
+    def get(self, request, *args, **kwargs):
+        comision = get_object_or_404(Comision, id=kwargs['pk'])
+
+        return JsonResponse({
+            'success': True,
+            'comision': {
+                'id': comision.id,
+                'nombre': comision.nombre,
+                'precio': str(comision.precio),
+                'slots': comision.slots,
+                'tiempo_estimado': comision.tiempo_estimado,
+                'descripcion': comision.descripcion,
+                'imagen_url': comision.imagen.url if comision.imagen else None,
+                'politica_id': comision.politica.id if comision.politica else '',
+                'usos_permitidos': comision.usos_permitidos,
+                'categorias': comision.categorias.split(',') if comision.categorias else [],
+            }
+        })
 
 
 class ComisionCreateView(ArtistRequiredMixin, View):
-    """Vista para crear comisión desde el popup (solo POST)"""
+    """Vista AJAX para crear comisión"""
 
     def post(self, request, *args, **kwargs):
+        print("===== DEBUG COMISION CREATE =====")
+        print("POST data:", request.POST)
+        print("FILES data:", request.FILES)
+
         form = ComisionForm(request.POST, request.FILES)
 
         if form.is_valid():
+            print("Formulario válido")
             comision = form.save(commit=False)
             comision.artista = request.user
             comision.save()
 
             # Guardar categorías
             categorias = request.POST.getlist('categorias_seleccionadas')
+            print("Categorías seleccionadas:", categorias)
+
             if len(categorias) > 3:
-                messages.error(request, "Máximo 3 categorías por comisión.")
-                return redirect('perfil_artista', pk=request.user.id)
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Máximo 3 categorías por comisión.'
+                }, status=400)
+
             comision.categorias = ','.join(categorias)
             comision.save()
 
-            messages.success(request, "Comisión creada correctamente.")
+            return JsonResponse({
+                'success': True,
+                'message': 'Comisión creada correctamente.',
+                'comision': {
+                    'id': comision.id,
+                    'nombre': comision.nombre,
+                    'precio': str(comision.precio),
+                    'slots_disponibles': comision.slots_disponibles,
+                    'tiempo_estimado': comision.tiempo_estimado,
+                    'descripcion': comision.descripcion[:100],
+                    'imagen_url': comision.imagen.url if comision.imagen else None,
+                }
+            })
         else:
-            messages.error(request, "Error al crear la comisión. Revisa los campos.")
-
-        return redirect('perfil_artista', pk=request.user.id)
+            print("Errores del formulario:", form.errors)
+            errors = {}
+            for field, error_list in form.errors.items():
+                errors[field] = error_list[0]
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
 
     def get(self, request, *args, **kwargs):
-        # Redirigir si alguien intenta acceder por GET
-        return redirect('perfil_artista', pk=request.user.id)
+        return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
 
 class ComisionUpdateView(ArtistRequiredMixin, View):
-    """Vista para editar comisión desde el popup (solo POST)"""
-
     def post(self, request, *args, **kwargs):
+        print("===== DEBUG COMISION UPDATE =====")
+        print("Comision ID:", kwargs.get('pk'))
+        print("POST data:", request.POST)
+        print("FILES data:", request.FILES)
+
         comision = get_object_or_404(Comision, id=kwargs['pk'])
 
         # Verificar permisos
         if comision.artista != request.user and not request.user.is_staff:
-            messages.error(request, "No tienes permiso para editar esta comisión.")
-            return redirect('perfil_artista', pk=request.user.id)
+            return JsonResponse({'success': False, 'error': 'No tienes permiso para editar esta comisión.'}, status=403)
 
         form = ComisionForm(request.POST, request.FILES, instance=comision)
 
         if form.is_valid():
+            print("Formulario válido")
             comision = form.save()
 
             # Actualizar categorías
             categorias = request.POST.getlist('categorias_seleccionadas')
+            print("Categorías seleccionadas:", categorias)
+
             if len(categorias) > 3:
-                messages.error(request, "Máximo 3 categorías por comisión.")
-                return redirect('perfil_artista', pk=request.user.id)
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Máximo 3 categorías por comisión.'
+                }, status=400)
+
             comision.categorias = ','.join(categorias)
             comision.save()
 
-            messages.success(request, "Comisión actualizada correctamente.")
+            # Devolver respuesta exitosa
+            return JsonResponse({
+                'success': True,
+                'message': 'Comisión actualizada correctamente.',
+                'comision': {
+                    'id': comision.id,
+                    'nombre': comision.nombre,
+                    'precio': str(comision.precio),
+                    'slots_disponibles': comision.slots_disponibles,
+                    'tiempo_estimado': comision.tiempo_estimado,
+                    'descripcion': comision.descripcion[:100],
+                    'imagen_url': comision.imagen.url if comision.imagen else None,
+                }
+            })
         else:
-            messages.error(request, "Error al actualizar la comisión.")
-
-        return redirect('perfil_artista', pk=request.user.id)
+            print("Errores del formulario:", form.errors)
+            errors = {}
+            for field, error_list in form.errors.items():
+                errors[field] = error_list[0]
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
 
     def get(self, request, *args, **kwargs):
-        return redirect('perfil_artista', pk=request.user.id)
+        return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
 class ComisionDeleteView(ArtistRequiredMixin, View):
-    """Vista para eliminar comisión (solo POST)"""
-
+    """Vista AJAX para eliminar comisión"""
     def post(self, request, *args, **kwargs):
         comision = get_object_or_404(Comision, id=kwargs['pk'])
 
         if comision.artista != request.user and not request.user.is_staff:
-            messages.error(request, "No tienes permiso para eliminar esta comisión.")
-            return redirect('perfil_artista', pk=request.user.id)
+            return JsonResponse({'success': False, 'error': 'No tienes permiso para eliminar esta comisión.'},
+                                status=403)
 
         comision.delete()
-        messages.success(request, "Comisión eliminada correctamente.")
-        return redirect('perfil_artista', pk=request.user.id)
+        return JsonResponse({'success': True, 'message': 'Comisión eliminada correctamente.'})
 
     def get(self, request, *args, **kwargs):
-        return redirect('perfil_artista', pk=request.user.id)
+        return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
+
+
+class ApiComisionesArtistaView(ArtistRequiredMixin, View):
+    """Vista AJAX para obtener las comisiones del artista logueado"""
+
+    def get(self, request, *args, **kwargs):
+        if not request.user.es_artista():
+            return JsonResponse({'comisiones': []})
+
+        comisiones = Comision.objects.filter(artista=request.user).order_by('-creada_en')
+
+        data = []
+        for c in comisiones:
+            data.append({
+                'id': c.id,
+                'nombre': c.nombre,
+                'precio': str(c.precio),
+                'slots_disponibles': c.slots_disponibles,
+                'tiempo_estimado': c.tiempo_estimado,
+                'descripcion': c.descripcion[:100],
+                'imagen_url': c.imagen.url if c.imagen else None,
+            })
+
+        return JsonResponse({'comisiones': data})
+
+
 
 # POLÍTICAS
 class PoliticaCreateView(TemplateView):

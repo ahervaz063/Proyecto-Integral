@@ -291,43 +291,16 @@
             <button class="tab" data-tab="reseñas">Reseñas</button>
         </div>
 
-        <!-- Paneles (contenido) -->
-        <div class="panel-container">
-            <!-- Panel Comisiones -->
-            <div id="comisiones" class="panel">
-                <div id="lista-comisiones">
-                    {% for comision in user.comisiones.all %}
-                        <div class="comision-card">
-                            {% if comision.imagen %}
-                                <img src="{{ comision.imagen.url }}" alt="{{ comision.nombre }}" class="comision-img">
-                            {% else %}
-                                <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="Ejemplo" class="comision-img">
-                            {% endif %}
-                            <div class="comision-info">
-                                <div class="comision-titulo">{{ comision.nombre }}</div>
-                                <div class="badges">
-                                    <span class="badge">📦 {{ comision.slots_disponibles }} slots</span>
-                                    <span class="badge">⏱️ {{ comision.tiempo_estimado }} días</span>
-                                    <span class="badge">💰 {{ comision.precio }}€</span>
-                                </div>
-                                <div class="comision-desc">{{ comision.descripcion|truncatewords:20 }}</div>
-                            </div>
-                            <div class="comision-acciones">
-                                <span class="icono-accion">✏️</span>
-                                <span class="icono-accion">🗑️</span>
-                            </div>
-                        </div>
-                    {% empty %}
-                        <div class="comision-card">
-                            <div class="comision-info">
-                                <div class="comision-titulo">No hay comisiones aún</div>
-                                <div class="comision-desc">Crea tu primera comisión usando el botón "+ Añadir comisión".</div>
-                            </div>
-                        </div>
-                    {% endfor %}
+            <!-- Paneles (contenido) -->
+                <div class="panel-container">
+             <!-- Panel Comisiones -->
+                <div id="comisiones" class="panel">
+                    <div id="lista-comisiones">
+                    <!-- Las comisiones se cargarán dinámicamente con JavaScript -->
+                    <div class="text-center">Cargando comisiones...</div>
                 </div>
-                <button class="btn-mas" onclick="document.getElementById('modal-comision').style.display='flex'">+ Añadir comisión</button>
-            </div>
+                    <button class="btn-mas" onclick="abrirModalCrearComision()">+ Añadir comisión</button>
+                </div>
 
             <!-- Panel Portfolio -->
             <div id="portfolio" class="panel oculto">
@@ -476,7 +449,6 @@
 </div>
 
 
-<!-- MODALES - SIN CAMBIOS (solo las actions) -->
 
 <!-- Modal / Popup para crear política -->
 <div id="modal-politicas" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
@@ -674,15 +646,17 @@
     <div style="background-color: white; width: 80%; max-width: 900px; border-radius: 20px; padding: 2rem; max-height: 90vh; overflow-y: auto;">
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h2 style="margin: 0;">Crear comisión</h2>
-            <button onclick="document.getElementById('modal-comision').style.display='none'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖️</button>
+            <h2 id="modal-comision-titulo" style="margin: 0;">Crear comisión</h2>
+            <button onclick="cerrarModalComision()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖️</button>
         </div>
-        
-        <form method="POST" action="{% url 'comision_create' %}" enctype="multipart/form-data">
+
+        <div id="form-errors" style="color: red; margin-bottom: 1rem; display: none;"></div>
+
+        <form id="form-crear-comision" method="POST" action="{% url 'comision_create' %}" enctype="multipart/form-data">
             {% csrf_token %}
-            
+
             <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
-                
+
                 <!-- Columna izquierda: foto de la comisión -->
                 <div style="flex: 1; min-width: 200px;">
                     <label for="imagen_comision" style="cursor: pointer;">
@@ -694,20 +668,20 @@
                     <input type="file" id="imagen_comision" name="imagen" accept="image/*" style="display: none;" onchange="previewComisionImagen(event)">
                     <p style="font-size: 0.7rem; color: #999; text-align: center; margin-top: 0.5rem;">La imagen mantendrá sus proporciones originales</p>
                 </div>
-                
+
                 <!-- Columna derecha: campos del formulario -->
                 <div style="flex: 2; min-width: 300px;">
-                    
+
                     <div style="margin-bottom: 1rem;">
                         <label for="nombre_comision" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Nombre de la comisión *</label>
                         <input type="text" id="nombre_comision" name="nombre" required style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Ej: Retrato realista, Ilustración de personaje...">
                     </div>
-                    
+
                     <div style="margin-bottom: 1rem;">
                         <label for="precio" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Precio (€) *</label>
                         <input type="number" id="precio" name="precio" required step="0.01" min="0" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Ej: 50">
                     </div>
-                    
+
                     <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
                         <div style="flex: 1;">
                             <label for="slots" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Número de slots *</label>
@@ -729,12 +703,12 @@
                             <input type="number" id="tiempo_estimado" name="tiempo_estimado" required min="1" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Ej: 7">
                         </div>
                     </div>
-                    
+
                     <div style="margin-bottom: 1rem;">
                         <label for="descripcion_comision" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Descripción *</label>
                         <textarea id="descripcion_comision" name="descripcion" rows="3" required style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Describe qué incluye la comisión, estilo, formato de entrega..."></textarea>
                     </div>
-                    
+
                     <div style="margin-bottom: 1rem;">
                         <label for="politica" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Política asociada</label>
                         <select id="politica" name="politica" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">
@@ -745,181 +719,440 @@
                         </select>
                         <p style="font-size: 0.7rem; color: #999; margin-top: 0.3rem;">Las políticas se crean desde el apartado de Políticas</p>
                     </div>
-                    
+
                     <div style="margin-bottom: 1.5rem;">
-                        <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Usos permitidos *</label>
-                        <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
-                            <label style="display: flex; align-items: center; gap: 0.3rem;">
-                                <input type="checkbox" name="usos" value="personal"> Uso personal
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 0.3rem;">
-                                <input type="checkbox" name="usos" value="comercial"> Uso comercial
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 0.3rem;">
-                                <input type="checkbox" name="usos" value="monetizar"> Monetizar contenido
-                            </label>
-                        </div>
+                        <label for="usos_permitidos" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Usos permitidos *</label>
+                        <select id="usos_permitidos" name="usos_permitidos" required style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">
+                            <option value="personal">Uso personal</option>
+                            <option value="comercial">Uso comercial</option>
+                            <option value="monetizar">Monetizar contenido</option>
+                            <option value="todos">Todos los usos</option>
+                        </select>
                     </div>
 
                     <!-- Categorías -->
-<div style="margin-bottom: 1.5rem;">
-    <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Categorías (máximo 3)</label>
-    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-        <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
-            <input type="checkbox" name="categorias_seleccionadas" value="ilustracion"> Ilustración
-        </label>
-        <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
-            <input type="checkbox" name="categorias_seleccionadas" value="diseno"> Diseño
-        </label>
-        <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
-            <input type="checkbox" name="categorias_seleccionadas" value="diseno_grafico"> Diseño Gráfico
-        </label>
-        <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
-            <input type="checkbox" name="categorias_seleccionadas" value="pixel_art"> Pixel Art
-        </label>
-        <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
-            <input type="checkbox" name="categorias_seleccionadas" value="3d"> 3D
-        </label>
-        <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
-            <input type="checkbox" name="categorias_seleccionadas" value="poster"> Póster
-        </label>
-        <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
-            <input type="checkbox" name="categorias_seleccionadas" value="concept_art"> Concept Art
-        </label>
-        <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
-            <input type="checkbox" name="categorias_seleccionadas" value="retrato"> Retrato
-        </label>
-        <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
-            <input type="checkbox" name="categorias_seleccionadas" value="BG"> Background
-        </label>
-        <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
-            <input type="checkbox" name="categorias_seleccionadas" value="personaje"> Personaje
-        </label>
-        <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
-            <input type="checkbox" name="categorias_seleccionadas" value="videojuego"> Videojuego
-        </label>
-        <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
-            <input type="checkbox" name="categorias_seleccionadas" value="libro"> Libro
-        </label>
-        <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
-            <input type="checkbox" name="categorias_seleccionadas" value="branding"> Branding
-        </label>
-        <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
-            <input type="checkbox" name="categorias_seleccionadas" value="comic_manga"> Cómic / Manga
-        </label>
-    </div>
-    <p style="font-size: 0.7rem; color: #999; margin-top: 0.3rem;">Selecciona hasta 3 categorías</p>
-</div>
-                    
-                    <div style="text-align: center; margin-top: 1rem;">
-                        <button type="submit" style="background-color: #333; color: white; padding: 0.8rem 2rem; border: none; border-radius: 30px; cursor: pointer;">Crear comisión</button>
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Categorías (máximo 3)</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
+                                <input type="checkbox" name="categorias_seleccionadas" value="ilustracion"> Ilustración
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
+                                <input type="checkbox" name="categorias_seleccionadas" value="diseno"> Diseño
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
+                                <input type="checkbox" name="categorias_seleccionadas" value="diseno_grafico"> Diseño Gráfico
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
+                                <input type="checkbox" name="categorias_seleccionadas" value="pixel_art"> Pixel Art
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
+                                <input type="checkbox" name="categorias_seleccionadas" value="3d"> 3D
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
+                                <input type="checkbox" name="categorias_seleccionadas" value="poster"> Póster
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
+                                <input type="checkbox" name="categorias_seleccionadas" value="concept_art"> Concept Art
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
+                                <input type="checkbox" name="categorias_seleccionadas" value="retrato"> Retrato
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
+                                <input type="checkbox" name="categorias_seleccionadas" value="BG"> Background
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
+                                <input type="checkbox" name="categorias_seleccionadas" value="personaje"> Personaje
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
+                                <input type="checkbox" name="categorias_seleccionadas" value="videojuego"> Videojuego
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
+                                <input type="checkbox" name="categorias_seleccionadas" value="libro"> Libro
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
+                                <input type="checkbox" name="categorias_seleccionadas" value="branding"> Branding
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.3rem; width: calc(33% - 0.5rem);">
+                                <input type="checkbox" name="categorias_seleccionadas" value="comic_manga"> Cómic / Manga
+                            </label>
+                        </div>
+                        <p style="font-size: 0.7rem; color: #999; margin-top: 0.3rem;">Selecciona hasta 3 categorías</p>
                     </div>
+
+                    <!--  BOTÓN DE ENVÍO -->
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <button type="submit" id="btn-crear-comision" style="background-color: #333; color: white; padding: 0.8rem 2rem; border: none; border-radius: 30px; cursor: pointer;">
+                            Crear comisión
+                        </button>
+                    </div>
+
                 </div>
-                
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    // Lógica de tabs con animación ease-in-out
-    const tabs = document.querySelectorAll('.tab');
-    const panels = document.querySelectorAll('.panel');
+// VARIABLES GLOBALES
+let comisionEditandoId = null;
 
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const tabId = tab.getAttribute('data-tab');
-            panels.forEach(panel => {
-                panel.classList.add('oculto');
-            });
-            const activePanel = document.getElementById(tabId);
-            activePanel.classList.remove('oculto');
-            tabs.forEach(t => t.classList.remove('activo'));
-            tab.classList.add('activo');
+const csrfToken = '{{ csrf_token }}';
+console.log('CSRF Token cargado:', csrfToken ? 'OK' : 'VACIO');
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// FUNCIONES PARA EL MODAL DE EDICIÓN DE PERFIL
+function abrirModalEditarPerfil() {
+    document.getElementById('modal-editar-perfil').style.display = 'flex';
+}
+
+function cerrarModalEditarPerfil() {
+    document.getElementById('modal-editar-perfil').style.display = 'none';
+}
+
+function previewFotoPerfil(event) {
+    const input = event.target;
+    const preview = document.getElementById('preview-foto');
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// FUNCIONES PARA EL MODAL DE PORTFOLIO
+function previewImagen(event) {
+    const input = event.target;
+    const previewText = document.getElementById('preview-text');
+    const previewImage = document.getElementById('preview-image');
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            previewImage.style.display = 'block';
+            previewText.style.display = 'none';
+        }
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        previewImage.style.display = 'none';
+        previewText.style.display = 'flex';
+    }
+}
+
+// FUNCIONES PARA EL MODAL DE COMISIÓN
+function previewComisionImagen(event) {
+    const input = event.target;
+    const previewText = document.getElementById('preview-comision-text');
+    const previewImage = document.getElementById('preview-comision-image');
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            previewImage.style.display = 'block';
+            previewText.style.display = 'none';
+        }
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        previewImage.style.display = 'none';
+        previewText.style.display = 'flex';
+    }
+}
+
+function abrirModalCrearComision() {
+    comisionEditandoId = null;
+    document.getElementById('modal-comision-titulo').textContent = 'Crear comisión';
+    document.getElementById('form-crear-comision').reset();
+    document.getElementById('preview-comision-image').style.display = 'none';
+    document.getElementById('preview-comision-text').style.display = 'flex';
+    document.getElementById('form-errors').style.display = 'none';
+    document.getElementById('modal-comision').style.display = 'flex';
+
+    const btn = document.getElementById('btn-crear-comision');
+    if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Crear comisión';
+    }
+
+}
+
+function abrirModalEditarComision(comisionId) {
+    console.log("Editando comisión con ID:", comisionId);
+    comisionEditandoId = comisionId;
+    document.getElementById('modal-comision-titulo').textContent = 'Editar comisión';
+    document.getElementById('form-errors').style.display = 'none';
+    console.log("🔵 Estableciendo comisionEditandoId a:", comisionId);
+
+    // Cargar datos de la comisión
+    fetch(`/comisiones/${comisionId}/datos/`)
+        .then(response => response.json())
+        .then(data => {
+            console.log("Datos recibidos:", data);
+            if (data.success) {
+                const c = data.comision;
+                document.getElementById('nombre_comision').value = c.nombre;
+                document.getElementById('precio').value = c.precio;
+                document.getElementById('slots').value = c.slots;
+                document.getElementById('tiempo_estimado').value = c.tiempo_estimado;
+                document.getElementById('descripcion_comision').value = c.descripcion;
+                document.getElementById('politica').value = c.politica_id;
+
+                // Usos permitidos
+                const usosSelect = document.getElementById('usos_permitidos');
+                if (usosSelect) {
+                    usosSelect.value = c.usos_permitidos;
+                } else {
+                    document.querySelectorAll('input[name="usos"]').forEach(cb => {
+                        cb.checked = cb.value === c.usos_permitidos;
+                    });
+                }
+
+                // Categorías
+                document.querySelectorAll('input[name="categorias_seleccionadas"]').forEach(cb => {
+                    cb.checked = c.categorias.includes(cb.value);
+                });
+
+                // Imagen
+                if (c.imagen_url) {
+                    const previewImg = document.getElementById('preview-comision-image');
+                    const previewText = document.getElementById('preview-comision-text');
+
+                if (previewImg) {
+                        previewImg.src = c.imagen_url;
+                        previewImg.style.display = 'block';
+                        if (previewText) previewText.style.display = 'none';
+                    }
+                }
+
+                document.getElementById('modal-comision').style.display = 'flex';
+            } else {
+                mostrarMensaje('Error al cargar los datos', 'error');
+            }
+        })
+        .catch(error => {
+            console.error("Error fetch:", error);
+            mostrarMensaje('Error al cargar los datos de la comisión', 'error');
         });
+}
+
+function cerrarModalComision() {
+    document.getElementById('modal-comision').style.display = 'none';
+}
+
+// ENVÍO DEL FORMULARIO (CREAR/EDITAR)
+function enviarFormularioComision(event) {
+    event.preventDefault();
+
+    const form = document.getElementById('form-crear-comision');
+    const formData = new FormData(form);
+    const btn = document.getElementById('btn-crear-comision');
+    const errorsDiv = document.getElementById('form-errors');
+    const url = comisionEditandoId ? `/comisiones/${comisionEditandoId}/editar/` : '/comisiones/crear/';
+
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+    if (errorsDiv) errorsDiv.style.display = 'none';
+
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Siempre habilitar el botón después de la respuesta
+        btn.disabled = false;
+
+        if (data.success) {
+            // Limpiar formulario
+            form.reset();
+            document.getElementById('preview-comision-image').style.display = 'none';
+            document.getElementById('preview-comision-text').style.display = 'flex';
+
+            cerrarModalComision();
+            mostrarMensaje(data.message, 'success');
+            recargarListaComisiones();
+
+            // Resetear el ID después de guardar
+            comisionEditandoId = null;
+            btn.textContent = 'Crear comisión';
+        } else {
+            if (errorsDiv) {
+                errorsDiv.style.display = 'block';
+                if (data.errors) {
+                    errorsDiv.innerHTML = Object.values(data.errors).join('<br>');
+                } else if (data.error) {
+                    errorsDiv.innerHTML = data.error;
+                }
+            }
+            btn.textContent = comisionEditandoId ? 'Actualizar comisión' : 'Crear comisión';
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        btn.disabled = false;
+        btn.textContent = comisionEditandoId ? 'Actualizar comisión' : 'Crear comisión';
+        if (errorsDiv) {
+            errorsDiv.style.display = 'block';
+            errorsDiv.innerHTML = 'Error de conexión. Inténtalo de nuevo.';
+        }
     });
+}
 
-    // Funciones para el modal de editar perfil
-    function abrirModalEditarPerfil() {
-        document.getElementById('modal-editar-perfil').style.display = 'flex';
-    }
+// ELIMINAR COMISIÓN
+function eliminarComision(comisionId, nombre) {
+    console.log("Eliminar comisión ID:", comisionId);
+    if (!confirm(`¿Eliminar la comisión "${nombre}"?`)) return;
 
-    function cerrarModalEditarPerfil() {
-        document.getElementById('modal-editar-perfil').style.display = 'none';
-    }
-
-    function previewFotoPerfil(event) {
-        const input = event.target;
-        const preview = document.getElementById('preview-foto');
-        
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                preview.src = e.target.result;
-            }
-            reader.readAsDataURL(input.files[0]);
+    fetch(`/comisiones/${comisionId}/eliminar/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
         }
-    }
-
-    // Función para previsualizar imagen del portfolio
-    function previewImagen(event) {
-        const input = event.target;
-        const previewContainer = document.getElementById('preview-container');
-        const previewText = document.getElementById('preview-text');
-        const previewImage = document.getElementById('preview-image');
-        
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImage.src = e.target.result;
-                previewImage.style.display = 'block';
-                previewText.style.display = 'none';
-            }
-            reader.readAsDataURL(input.files[0]);
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Respuesta eliminar:", data);
+        if (data.success) {
+            mostrarMensaje(data.message, 'success');
+            recargarListaComisiones();
         } else {
-            previewImage.style.display = 'none';
-            previewText.style.display = 'flex';
+            mostrarMensaje(data.error || 'Error al eliminar', 'error');
         }
-    }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        mostrarMensaje('Error de conexión', 'error');
+    });
+}
 
-    function previewComisionImagen(event) {
-        const input = event.target;
-        const previewText = document.getElementById('preview-comision-text');
-        const previewImage = document.getElementById('preview-comision-image');
-        
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImage.src = e.target.result;
-                previewImage.style.display = 'block';
-                previewText.style.display = 'none';
+// RECARGAR LISTA DE COMISIONES (SIN RECARGAR PÁGINA)
+function recargarListaComisiones() {
+    const listaComisiones = document.getElementById('lista-comisiones');
+    if (!listaComisiones) return;
+
+    listaComisiones.innerHTML = '<div class="text-center">Cargando comisiones...</div>';
+
+    fetch('/api/comisiones/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.comisiones && data.comisiones.length > 0) {
+                listaComisiones.innerHTML = data.comisiones.map(comision => `
+                    <div class="comision-card" data-id="${comision.id}">
+                        ${comision.imagen_url ? `<img src="${comision.imagen_url}" alt="${comision.nombre}" class="comision-img">` : '<div class="comision-img" style="background:#eee; display:flex;align-items:center;justify-content:center;">📷</div>'}
+                        <div class="comision-info">
+                            <div class="comision-titulo">${escapeHtml(comision.nombre)}</div>
+                            <div class="badges">
+                                <span class="badge">📦 ${comision.slots_disponibles} slots</span>
+                                <span class="badge">⏱️ ${comision.tiempo_estimado} días</span>
+                                <span class="badge">💰 ${comision.precio}€</span>
+                            </div>
+                            <div class="comision-desc">${escapeHtml(comision.descripcion)}</div>
+                        </div>
+                        <div class="comision-acciones">
+                            <span class="icono-accion" onclick="abrirModalEditarComision(${comision.id})">✏️</span>
+                            <span class="icono-accion" onclick="eliminarComision(${comision.id}, '${escapeHtml(comision.nombre)}')">🗑️</span>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                listaComisiones.innerHTML = '<div class="empty-state">No tienes comisiones creadas aún.</div>';
             }
-            reader.readAsDataURL(input.files[0]);
-        } else {
-            previewImage.style.display = 'none';
-            previewText.style.display = 'flex';
-        }
+            comisionEditandoId = null;
+        })
+        .catch(error => {
+            listaComisiones.innerHTML = '<div class="empty-state">Error al cargar las comisiones.</div>';
+        });
+}
+
+// FUNCIONES PARA LOS TABS
+
+const tabs = document.querySelectorAll('.tab');
+const panels = document.querySelectorAll('.panel');
+
+tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        const tabId = tab.getAttribute('data-tab');
+        panels.forEach(panel => {
+            panel.classList.add('oculto');
+        });
+        const activePanel = document.getElementById(tabId);
+        activePanel.classList.remove('oculto');
+        tabs.forEach(t => t.classList.remove('activo'));
+        tab.classList.add('activo');
+    });
+});
+
+// UTILIDADES
+function mostrarMensaje(mensaje, tipo) {
+    const div = document.createElement('div');
+    div.textContent = mensaje;
+    div.style.cssText = `position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; z-index: 10000; color: white; background-color: ${tipo === 'success' ? '#28a745' : '#dc3545'};`;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 3000);
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+
+// INICIALIZAR EVENTOS
+document.addEventListener('DOMContentLoaded', function() {
+    // Formulario de comisión
+    const form = document.getElementById('form-crear-comision');
+    if (form) {
+        form.addEventListener('submit', enviarFormularioComision);
     }
 
-    // Cerrar modal si se hace clic fuera del contenido
+    // Cargar las comisiones al inicio
+    recargarListaComisiones();
+
+    // Cerrar modales al hacer clic fuera
     window.onclick = function(event) {
-        const modalPerfil = document.getElementById('modal-editar-perfil');
+        const modalComision = document.getElementById('modal-comision');
+        const modalEditarPerfil = document.getElementById('modal-editar-perfil');
         const modalPoliticas = document.getElementById('modal-politicas');
         const modalPortfolio = document.getElementById('modal-portfolio');
-        const modalComision = document.getElementById('modal-comision');
-        
-        if (event.target === modalPerfil) {
-            modalPerfil.style.display = 'none';
+
+        if (event.target === modalComision) {
+            cerrarModalComision();
+        }
+        if (event.target === modalEditarPerfil) {
+            cerrarModalEditarPerfil();
         }
         if (event.target === modalPoliticas) {
-            modalPoliticas.style.display = 'none';
+            document.getElementById('modal-politicas').style.display = 'none';
         }
         if (event.target === modalPortfolio) {
-            modalPortfolio.style.display = 'none';
+            document.getElementById('modal-portfolio').style.display = 'none';
         }
-        if (event.target === modalComision) {
-            modalComision.style.display = 'none';
-        }
-    }
+    };
+});
 </script>
 {% endblock %}

@@ -24,6 +24,13 @@ urlpatterns = [
     path('comisiones/<int:pk>/eliminar/', views.ComisionDeleteView.as_view(), name='comision_delete'),
     path('comision/<int:comision_id>/guardar/', views.GuardarComisionView.as_view(), name='guardar_comision'),
 
+    #Comisiones AJAX
+    path('api/comisiones/', views.ApiComisionesArtistaView.as_view(), name='api_comisiones'),
+    path('comisiones/<int:pk>/datos/', views.ComisionDetailView.as_view(), name='comision_datos'),
+    path('comisiones/crear/', views.ComisionCreateView.as_view(), name='comision_create'),
+    path('comisiones/<int:pk>/editar/', views.ComisionUpdateView.as_view(), name='comision_update'),
+    path('comisiones/<int:pk>/eliminar/', views.ComisionDeleteView.as_view(), name='comision_delete'),
+
     # Políticas
     path('politicas/crear/', views.PoliticaCreateView.as_view(), name='politica_create'),
     path('politicas/<int:pk>/editar/', views.PoliticaUpdateView.as_view(), name='politica_update'),
