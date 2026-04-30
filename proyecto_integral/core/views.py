@@ -5,7 +5,7 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView as AuthLoginView
-from core.models import Comision, Usuario, ComisionGuardada, Perfil, SolicitudEncargo, Resena
+from core.models import Comision, Usuario, ComisionGuardada, Perfil, SolicitudEncargo, Resena, PortfolioImagen
 from core.forms import ComisionForm, RegistroForm, SolicitudEncargoForm, ResenaForm
 from django.db.models import Avg, Count, Q
 from core.mixins import ClientRequiredMixin, ArtistRequiredMixin
@@ -361,13 +361,97 @@ class PoliticaDeleteView(TemplateView):
 
 
 # PORTFOLIO
-class PortfolioCreateView(TemplateView):
-    template_name = 'core/portfolio/form.html'
+class PortfolioCreateView(ArtistRequiredMixin, View):
+    """Subir imagen al portfolio con AJAX"""
+
+    def post(self, request):
+        titulo = request.POST.get('titulo', '')
+        imagen = request.FILES.get('imagen')
+
+        if not imagen:
+            return JsonResponse({'success': False, 'error': 'Debes seleccionar una imagen.'}, status=400)
+
+        # Crear la imagen en el portfolio
+        portfolio_img = PortfolioImagen.objects.create(
+            artista=request.user,
+            imagen=imagen,
+            titulo=titulo
+        )
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Imagen subida correctamente.',
+            'imagen': {
+                'id': portfolio_img.id,
+                'imagen_url': portfolio_img.imagen.url,
+                'titulo': portfolio_img.titulo,
+            }
+        })
 
 
-class PortfolioDeleteView(TemplateView):
-    template_name = 'core/portfolio/confirm_delete.html'
+class PortfolioDetailView(ArtistRequiredMixin, View):
+    """Obtener datos de una imagen del portfolio para editar"""
 
+    def get(self, request, pk):
+        imagen = get_object_or_404(PortfolioImagen, id=pk, artista=request.user)
+        return JsonResponse({
+            'success': True,
+            'imagen': {
+                'id': imagen.id,
+                'imagen_url': imagen.imagen.url,
+                'titulo': imagen.titulo,
+            }
+        })
+
+
+class PortfolioDeleteView(ArtistRequiredMixin, View):
+    """Eliminar imagen del portfolio con AJAX"""
+
+    def post(self, request, pk):
+        imagen = get_object_or_404(PortfolioImagen, id=pk, artista=request.user)
+        imagen.delete()
+        return JsonResponse({'success': True, 'message': 'Imagen eliminada correctamente.'})
+
+
+class PortfolioUpdateView(ArtistRequiredMixin, View):
+    """Actualizar imagen del portfolio (imagen y título)"""
+
+    def post(self, request, pk):
+        imagen = get_object_or_404(PortfolioImagen, id=pk, artista=request.user)
+        titulo = request.POST.get('titulo', '')
+
+        # Actualizar título
+        imagen.titulo = titulo
+
+        # Actualizar imagen si se subió una nueva
+        if 'imagen' in request.FILES:
+            imagen.imagen = request.FILES['imagen']
+
+        imagen.save()
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Imagen actualizada correctamente.',
+            'imagen': {
+                'id': imagen.id,
+                'imagen_url': imagen.imagen.url,
+                'titulo': imagen.titulo,
+            }
+        })
+
+class ApiPortfolioView(ArtistRequiredMixin, View):
+    """Obtener todas las imágenes del portfolio del artista"""
+
+    def get(self, request):
+        imagenes = PortfolioImagen.objects.filter(artista=request.user).order_by('-fecha_subida')
+        data = []
+        for img in imagenes:
+            data.append({
+                'id': img.id,
+                'imagen_url': img.imagen.url,
+                'titulo': img.titulo,
+            })
+        return JsonResponse({'imagenes': data})
 
 # SOLICITUDES DE ENCARGO
 class SolicitudCreateView(ClientRequiredMixin, CreateView):

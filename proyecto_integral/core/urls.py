@@ -37,8 +37,11 @@ urlpatterns = [
     path('politicas/<int:pk>/eliminar/', views.PoliticaDeleteView.as_view(), name='politica_delete'),
 
     # Portfolio
+    path('api/portfolio/', views.ApiPortfolioView.as_view(), name='api_portfolio'),
     path('portfolio/subir/', views.PortfolioCreateView.as_view(), name='portfolio_create'),
     path('portfolio/<int:pk>/eliminar/', views.PortfolioDeleteView.as_view(), name='portfolio_delete'),
+    path('portfolio/<int:pk>/datos/', views.PortfolioDetailView.as_view(), name='portfolio_datos'),
+    path('portfolio/<int:pk>/editar/', views.PortfolioUpdateView.as_view(), name='portfolio_update'),
 
     # Solicitudes
     path('solicitud/crear/<int:comision_id>/', views.SolicitudCreateView.as_view(), name='solicitud_create'),

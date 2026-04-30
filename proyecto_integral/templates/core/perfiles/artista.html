@@ -241,6 +241,42 @@
         margin-top: 0.5rem;
         font-size: 0.9rem;
     }
+    .item-portfolio {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+}
+
+.item-portfolio img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: 0.3s;
+}
+
+.item-portfolio:hover img {
+    filter: brightness(0.6);
+}
+
+.portfolio-titulo {
+    position: absolute;
+    bottom: -40px;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    text-align: center;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+    transition: bottom 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.item-portfolio:hover .portfolio-titulo {
+    bottom: 0;
+}
 </style>
 {% endblock %}
 
@@ -304,40 +340,10 @@
 
             <!-- Panel Portfolio -->
             <div id="portfolio" class="panel oculto">
-                <div class="galeria">
-                    {% for imagen in user.portfolio.all %}
-                        <div class="item-portfolio">
-                            <img src="{{ imagen.imagen.url }}" alt="{{ imagen.titulo }}">
-                            <div class="portfolio-acciones">
-                                <span>✏️</span>
-                                <span>🗑️</span>
-                            </div>
-                        </div>
-                    {% empty %}
-                        <div class="item-portfolio">
-                            <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="Sin imágenes">
-                            <div class="portfolio-acciones">
-                                <span>✏️</span>
-                                <span>🗑️</span>
-                            </div>
-                        </div>
-                        <div class="item-portfolio">
-                            <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="Sin imágenes">
-                            <div class="portfolio-acciones">
-                                <span>✏️</span>
-                                <span>🗑️</span>
-                            </div>
-                        </div>
-                        <div class="item-portfolio">
-                            <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="Sin imágenes">
-                            <div class="portfolio-acciones">
-                                <span>✏️</span>
-                                <span>🗑️</span>
-                            </div>
-                        </div>
-                    {% endfor %}
+                <div id="galeria-portfolio" class="galeria">
+                    <div class="text-center">Cargando portfolio...</div>
                 </div>
-                <button class="btn-mas" onclick="document.getElementById('modal-portfolio').style.display='flex'">+ Añadir imagen</button>
+                <button class="btn-mas" onclick="abrirModalPortfolio()">+ Añadir imagen</button>
             </div>
 
             <!-- Panel Políticas -->
@@ -523,36 +529,39 @@
     <div style="background-color: white; width: 50%; max-width: 800px; min-width: 600px; border-radius: 20px; padding: 1.5rem; max-height: 90vh; overflow-y: auto;">
         
         <div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
-            <button onclick="document.getElementById('modal-portfolio').style.display='none'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖️</button>
+            <button onclick="cerrarModalPortfolio()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖️</button>
         </div>
-        
-        <form method="POST" action="{% url 'portfolio_create' %}" enctype="multipart/form-data">
+
+        <div id="form-portfolio-errors" style="color: red; margin-bottom: 1rem; display: none;"></div>
+
+        <form id="form-subir-portfolio" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
-            
+
             <div style="display: flex; gap: 2rem; align-items: flex-start;">
-                
+
                 <!-- Columna izquierda: imagen (3:4 vertical) -->
                 <div style="flex: 1; text-align: center;">
-                    <label for="imagen_portfolio" style="cursor: pointer;">
-                        <div id="preview-container" style="width: 100%; aspect-ratio: 3 / 4; background-color: #f0f0f0; border: 2px dashed #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                            <span id="preview-text" style="color: #999;">➕<br>Subir imagen</span>
-                            <img id="preview-image" src="#" alt="Vista previa" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                    <label for="imagen_portfolio_subir" style="cursor: pointer;">
+                        <div id="preview-portfolio-container" style="width: 100%; aspect-ratio: 3 / 4; background-color: #f0f0f0; border: 2px dashed #ccc; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                            <span id="preview-portfolio-text" style="color: #999;">➕<br>Subir imagen</span>
+                            <img id="preview-portfolio-image" src="#" alt="Vista previa" style="display: none; width: 100%; height: 100%; object-fit: cover;">
                         </div>
                     </label>
-                    <input type="file" id="imagen_portfolio" name="imagen" accept="image/*" style="display: none;" onchange="previewImagen(event)">
+                    <input type="file" id="imagen_portfolio_subir" name="imagen" accept="image/*" style="display: none;" onchange="previewPortfolioImagen(event)">
+                    <p style="font-size: 0.7rem; color: #999; text-align: center; margin-top: 0.5rem;">La imagen se mostrará en formato 3:4 vertical</p>
                 </div>
-                
+
                 <!-- Columna derecha: título y botón -->
                 <div style="flex: 1;">
-                    <h2 style="margin-top: 0; margin-bottom: 1.5rem;">Portfolio</h2>
-                    
+                    <h2 id="modal-portfolio-titulo" style="margin-top: 0; margin-bottom: 1.5rem;">Portfolio</h2>
+
                     <div style="margin-bottom: 1.5rem;">
-                        <label for="titulo_obra" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Título</label>
+                        <label for="titulo_obra" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Título (opcional)</label>
                         <input type="text" id="titulo_obra" name="titulo" style="width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Nombre de la pieza...">
                     </div>
-                    
+
                     <div style="text-align: center; margin-top: 2rem;">
-                        <button type="submit" style="background-color: #333; color: white; padding: 0.8rem 2rem; border: none; border-radius: 30px; cursor: pointer;">Añadir al portfolio</button>
+                        <button type="submit" id="btn-subir-portfolio" style="background-color: #333; color: white; padding: 0.8rem 2rem; border: none; border-radius: 30px; cursor: pointer;">Añadir al portfolio</button>
                     </div>
                 </div>
                 
@@ -561,6 +570,26 @@
     </div>
 </div>
 
+<!-- Modal / Popup para editar título del portfolio -->
+<div id="modal-editar-portfolio" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background-color: white; width: 400px; border-radius: 20px; padding: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0;">Editar título</h2>
+            <button onclick="cerrarModalEditarPortfolio()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖️</button>
+        </div>
+
+        <form id="form-editar-portfolio" onsubmit="guardarTituloPortfolio(event)">
+            <div style="margin-bottom: 1.5rem;">
+                <label for="modal-portfolio-titulo-edit" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Título</label>
+                <input type="text" id="modal-portfolio-titulo-edit" name="titulo" style="width: 100%; padding: 0.8rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Título de la obra">
+            </div>
+
+            <div style="text-align: center;">
+                <button type="submit" id="btn-guardar-titulo" style="background-color: #333; color: white; padding: 0.8rem 2rem; border: none; border-radius: 30px; cursor: pointer;">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <!-- Modal / Popup para editar perfil -->
 <div id="modal-editar-perfil" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
@@ -1122,6 +1151,203 @@ function escapeHtml(text) {
 }
 
 
+
+// PORTFOLIO
+function abrirModalPortfolio() {
+    document.getElementById('form-portfolio-errors').style.display = 'none';
+    document.getElementById('form-subir-portfolio').reset();
+    document.getElementById('preview-portfolio-image').style.display = 'none';
+    document.getElementById('preview-portfolio-text').style.display = 'flex';
+    document.getElementById('modal-portfolio').style.display = 'flex';
+}
+
+function cerrarModalPortfolio() {
+    document.getElementById('modal-portfolio').style.display = 'none';
+}
+
+function previewPortfolioImagen(event) {
+    const input = event.target;
+    const previewText = document.getElementById('preview-portfolio-text');
+    const previewImage = document.getElementById('preview-portfolio-image');
+
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            previewImage.style.display = 'block';
+            previewText.style.display = 'none';
+        }
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        previewImage.style.display = 'none';
+        previewText.style.display = 'flex';
+    }
+}
+
+function eliminarImagenPortfolio(imagenId, titulo) {
+    if (!confirm(`¿Eliminar la imagen "${titulo || 'sin título'}"?`)) return;
+
+    fetch(`/portfolio/${imagenId}/eliminar/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarMensaje(data.message, 'success');
+            recargarPortfolio();
+        } else {
+            mostrarMensaje(data.error || 'Error al eliminar', 'error');
+        }
+    })
+    .catch(error => {
+        mostrarMensaje('Error de conexión', 'error');
+    });
+}
+
+function recargarPortfolio() {
+    const galeria = document.getElementById('galeria-portfolio');
+    if (!galeria) return;
+
+    galeria.innerHTML = '<div class="text-center">Cargando portfolio...</div>';
+
+    fetch('/api/portfolio/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.imagenes && data.imagenes.length > 0) {
+                galeria.innerHTML = data.imagenes.map(img => `
+                    <div class="item-portfolio" data-id="${img.id}">
+                        <img src="${img.imagen_url}" alt="${escapeHtml(img.titulo)}">
+                        <div class="portfolio-acciones">
+                            <span onclick="abrirModalEditarPortfolio(${img.id})">✏️</span>
+                            <span onclick="eliminarImagenPortfolio(${img.id}, '${escapeHtml(img.titulo)}')">🗑️</span>
+                        </div>
+                        <div class="portfolio-titulo">${escapeHtml(img.titulo || 'Sin título')}</div>
+                    </div>
+                `).join('');
+            } else {
+                galeria.innerHTML = `
+                    <div class="item-portfolio">
+                        <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="Sin imágenes">
+                        <div class="portfolio-acciones">
+                            <span>✏️</span>
+                            <span>🗑️</span>
+                        </div>
+                        <div class="portfolio-titulo">Sin título</div>
+                    </div>
+                    <div class="item-portfolio">
+                        <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="Sin imágenes">
+                        <div class="portfolio-acciones">
+                            <span>✏️</span>
+                            <span>🗑️</span>
+                        </div>
+                        <div class="portfolio-titulo">Sin título</div>
+                    </div>
+                    <div class="item-portfolio">
+                        <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="Sin imágenes">
+                        <div class="portfolio-acciones">
+                            <span>✏️</span>
+                            <span>🗑️</span>
+                        </div>
+                        <div class="portfolio-titulo">Sin título</div>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            galeria.innerHTML = '<div class="empty-state">Error al cargar el portfolio.</div>';
+        });
+}
+
+// EDITAR PORTFOLIO
+let portfolioEditandoId = null;
+
+function abrirModalEditarPortfolio(imagenId) {
+    portfolioEditandoId = imagenId;
+    document.getElementById('modal-portfolio-titulo').textContent = 'Editar imagen';
+    document.getElementById('btn-subir-portfolio').textContent = 'Actualizar imagen';
+
+    // Cargar datos de la imagen
+    fetch(`/portfolio/${imagenId}/datos/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const img = data.imagen;
+                document.getElementById('titulo_obra').value = img.titulo;
+
+                // Mostrar la imagen actual
+                const previewImg = document.getElementById('preview-portfolio-image');
+                const previewText = document.getElementById('preview-portfolio-text');
+                previewImg.src = img.imagen_url;
+                previewImg.style.display = 'block';
+                previewText.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            mostrarMensaje('Error al cargar los datos', 'error');
+        });
+
+    document.getElementById('modal-portfolio').style.display = 'flex';
+}
+
+function cerrarModalPortfolio() {
+    document.getElementById('modal-portfolio').style.display = 'none';
+    portfolioEditandoId = null;
+    document.getElementById('modal-portfolio-titulo').textContent = 'Portfolio';
+    document.getElementById('btn-subir-portfolio').textContent = 'Añadir al portfolio';
+}
+
+function enviarFormularioPortfolio(event) {
+    event.preventDefault();
+
+    const form = document.getElementById('form-subir-portfolio');
+    const formData = new FormData(form);
+    const btn = document.getElementById('btn-subir-portfolio');
+    const errorsDiv = document.getElementById('form-portfolio-errors');
+    const url = portfolioEditandoId ? `/portfolio/${portfolioEditandoId}/editar/` : '/portfolio/subir/';
+
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+    if (errorsDiv) errorsDiv.style.display = 'none';
+
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+
+        if (data.success) {
+            cerrarModalPortfolio();
+            mostrarMensaje(data.message, 'success');
+            recargarPortfolio();
+            portfolioEditandoId = null;
+        } else {
+            if (errorsDiv) {
+                errorsDiv.style.display = 'block';
+                errorsDiv.innerHTML = data.error || 'Error al procesar la imagen.';
+            }
+            btn.textContent = portfolioEditandoId ? 'Actualizar' : 'Añadir al portfolio';
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.textContent = portfolioEditandoId ? 'Actualizar' : 'Añadir al portfolio';
+        if (errorsDiv) {
+            errorsDiv.style.display = 'block';
+            errorsDiv.innerHTML = 'Error de conexión. Inténtalo de nuevo.';
+        }
+    });
+}
+
 // INICIALIZAR EVENTOS
 document.addEventListener('DOMContentLoaded', function() {
     // Formulario de comisión
@@ -1129,9 +1355,17 @@ document.addEventListener('DOMContentLoaded', function() {
     if (form) {
         form.addEventListener('submit', enviarFormularioComision);
     }
+    // Formulario de portfolio
+    const portfolioForm = document.getElementById('form-subir-portfolio');
+    if (portfolioForm) {
+        portfolioForm.addEventListener('submit', enviarFormularioPortfolio);
+    }
 
     // Cargar las comisiones al inicio
     recargarListaComisiones();
+
+    // Recargar portfolio al iniciar
+    recargarPortfolio();
 
     // Cerrar modales al hacer clic fuera
     window.onclick = function(event) {
