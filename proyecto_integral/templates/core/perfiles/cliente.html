@@ -428,9 +428,12 @@
     </div>
 </div>
 
+
 <script>
     const tabs = document.querySelectorAll('.tab');
     const panels = document.querySelectorAll('.panel');
+    const csrfToken = '{{ csrf_token }}';
+    window.csrfToken = csrfToken;
 
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -452,6 +455,37 @@
     function cerrarModalEditarPerfil() {
         document.getElementById('modal-editar-perfil').style.display = 'none';
     }
+
+    function recargarSolicitudesCliente() {
+    const listaSolicitudes = document.getElementById('lista-solicitudes');
+    if (!listaSolicitudes) return;
+
+    listaSolicitudes.innerHTML = '<div class="text-center">Cargando tus solicitudes...</div>';
+
+    fetch('/api/mis-solicitudes/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.solicitudes && data.solicitudes.length > 0) {
+                listaSolicitudes.innerHTML = data.solicitudes.map(s => `
+                    <div class="solicitud-card">
+                        <div class="d-flex justify-content-between">
+                            <strong>${escapeHtml(s.comision_nombre)}</strong>
+                            <span class="badge ${getEstadoBadgeClass(s.estado)}">${escapeHtml(s.estado_display)}</span>
+                        </div>
+                        <p><strong>Artista:</strong> @${escapeHtml(s.artista_username)}</p>
+                        <p><strong>Precio:</strong> ${s.precio}€</p>
+                        <p><strong>Tu idea:</strong> ${escapeHtml(s.descripcion)}</p>
+                        ${s.estado === 'pendiente' ? `<button class="btn btn-danger btn-sm" onclick="cancelarSolicitudCliente(${s.id})">Cancelar</button>` : ''}
+                    </div>
+                `).join('');
+            } else {
+                listaSolicitudes.innerHTML = '<div class="empty-state">No has realizado ninguna solicitud aún.</div>';
+            }
+        })
+        .catch(error => {
+            listaSolicitudes.innerHTML = '<div class="empty-state">Error al cargar tus solicitudes.</div>';
+        });
+}
 
     function previewFotoPerfil(event) {
         const input = event.target;

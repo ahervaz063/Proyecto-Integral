@@ -540,28 +540,37 @@ class ApiPortfolioView(ArtistRequiredMixin, View):
         return JsonResponse({'imagenes': data})
 
 # SOLICITUDES DE ENCARGO
-class SolicitudCreateView(ClientRequiredMixin, CreateView):
-    model = SolicitudEncargo
-    form_class = SolicitudEncargoForm
-    template_name = 'core/solicitudes/form.html'
+class SolicitudCreateView(ClientRequiredMixin, View):
+    """Crear solicitud de encargo con AJAX"""
 
-    def dispatch(self, request, *args, **kwargs):
-        self.comision = get_object_or_404(Comision, id=self.kwargs['comision_id'])
-        return super().dispatch(request, *args, **kwargs)
+    def post(self, request, comision_id):
+        comision = get_object_or_404(Comision, id=comision_id)
 
-    def form_valid(self, form):
-        form.instance.cliente = self.request.user
-        form.instance.comision = self.comision
-        messages.success(self.request, "Solicitud enviada correctamente. El artista te responderá pronto.")
-        return super().form_valid(form)
+        # Verificar disponibilidad
+        if not comision.esta_disponible:
+            return JsonResponse({
+                'success': False,
+                'error': 'Esta comisión ya no tiene slots disponibles.'
+            }, status=400)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['comision'] = self.comision
-        return context
+        # Crear la solicitud
+        solicitud = SolicitudEncargo.objects.create(
+            cliente=request.user,
+            comision=comision,
+            email=request.POST.get('email'),
+            instagram=request.POST.get('instagram', ''),
+            descripcion_idea=request.POST.get('descripcion_idea'),
+            referencias=request.FILES.get('referencias')
+        )
 
-    def get_success_url(self):
-        return reverse_lazy('mis_solicitudes_cliente')
+        return JsonResponse({
+            'success': True,
+            'message': 'Solicitud enviada correctamente. El artista te responderá pronto.',
+            'solicitud_id': solicitud.id
+        })
+
+    def get(self, request, comision_id):
+        return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
 
 class SolicitudesArtistaListView(ArtistRequiredMixin, LoginRequiredMixin, ListView):
@@ -651,6 +660,28 @@ def finalizar_encargo(request, solicitud_id):
         messages.error(request, "Solo puedes finalizar encargos aceptados.")
 
     return redirect('solicitudes_artista')
+
+
+class ApiSolicitudesView(ArtistRequiredMixin, View):
+    """Obtener todas las solicitudes del artista (para recargar sin recargar página)"""
+
+    def get(self, request):
+        solicitudes = SolicitudEncargo.objects.filter(
+            comision__artista=request.user
+        ).select_related('cliente', 'comision').order_by('-fecha_solicitud')
+
+        data = []
+        for s in solicitudes:
+            data.append({
+                'id': s.id,
+                'cliente_username': s.cliente.username,
+                'comision_nombre': s.comision.nombre,
+                'descripcion': s.descripcion_idea[:100],
+                'estado': s.estado,
+                'estado_display': s.get_estado_display(),
+                'fecha': s.fecha_solicitud.strftime('%d/%m/%Y %H:%M'),
+            })
+        return JsonResponse({'solicitudes': data})
 
 #RESEÑAS
 class ResenaCreateView(LoginRequiredMixin, CreateView):
@@ -753,15 +784,19 @@ class BuscarComisionesView(ListView):
         context['precio_seleccionado'] = self.request.GET.get('precio', '')
         context['valoracion_seleccionada'] = self.request.GET.get('valoracion', '')
 
-        # Añadir comisiones guardadas para clientes logueados
-        if self.request.user.is_authenticated and self.request.user.es_cliente():
-            guardadas = ComisionGuardada.objects.filter(cliente=self.request.user).values_list('comision_id', flat=True)
-            context['comisiones_guardadas_ids'] = list(guardadas)
+        # Añadir el ID del usuario actual
+        if self.request.user.is_authenticated:
+            context['user_id'] = self.request.user.id
         else:
-            context['comisiones_guardadas_ids'] = []
+            context['user_id'] = 0
+
         return context
 
 #MODAL DETALLE COMISIÓN
 def comision_detalle_modal(request, comision_id):
     comision = get_object_or_404(Comision, id=comision_id, activa=True)
-    return render(request, 'core/comisiones/detalle_modal.html', {'comision': comision})
+    user_id = request.user.id if request.user.is_authenticated else 0
+    return render(request, 'core/comisiones/detalle_modal.html', {
+        'comision': comision,
+        'user_id': user_id
+    })

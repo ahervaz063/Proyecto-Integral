@@ -372,39 +372,11 @@
             </div>
 
             <!-- Panel Solicitudes -->
-<div id="solicitudes" class="panel oculto">
-    <div id="lista-solicitudes">
-        {% for solicitud in solicitudes_recibidas %}
-            <div class="solicitud-card" style="background-color: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
-                <div class="d-flex justify-content-between">
-                    <strong>Cliente: @{{ solicitud.cliente.username }}</strong>
-                    <span class="badge
-                        {% if solicitud.estado == 'pendiente' %}bg-warning
-                        {% elif solicitud.estado == 'aceptada' %}bg-success
-                        {% elif solicitud.estado == 'rechazada' %}bg-danger
-                        {% else %}badge-secondary{% endif %}">
-                        {{ solicitud.get_estado_display }}
-                    </span>
+            <div id="solicitudes" class="panel oculto">
+                <div id="lista-solicitudes">
+                    <div class="text-center">Cargando solicitudes...</div>
                 </div>
-                <p><strong>Comisión:</strong> {{ solicitud.comision.nombre }}</p>
-                <p><strong>Descripción:</strong> {{ solicitud.descripcion_idea|truncatewords:30 }}</p>
-
-                {% if solicitud.estado == 'pendiente' %}
-                    <div class="mt-2">
-                        <a href="{% url 'aceptar_solicitud' solicitud.id %}" class="btn btn-success btn-sm" onclick="return confirm('¿Aceptar esta solicitud?')">✅ Aceptar</a>
-                        <a href="{% url 'rechazar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Rechazar esta solicitud?')">❌ Rechazar</a>
-                    </div>
-                {% elif solicitud.estado == 'aceptada' %}
-                    <div class="mt-2">
-                        <a href="{% url 'finalizar_encargo' solicitud.id %}" class="btn btn-info btn-sm" onclick="return confirm('¿Finalizar este encargo?')">🎉 Finalizar encargo</a>
-                    </div>
-                {% endif %}
             </div>
-        {% empty %}
-            <p>No has recibido solicitudes aún.</p>
-        {% endfor %}
-    </div>
-</div>
 
             <!-- Panel Reseñas -->
             <div id="reseñas" class="panel oculto">
@@ -825,8 +797,8 @@
 <script>
 // VARIABLES GLOBALES
 let comisionEditandoId = null;
-
 const csrfToken = '{{ csrf_token }}';
+window.csrfToken = csrfToken;
 console.log('CSRF Token cargado:', csrfToken ? 'OK' : 'VACIO');
 
 function getCookie(name) {
@@ -1579,7 +1551,66 @@ function recargarPoliticas() {
         });
 }
 
+function recargarSolicitudes() {
+    const listaSolicitudes = document.getElementById('lista-solicitudes');
+    if (!listaSolicitudes) return;
 
+    listaSolicitudes.innerHTML = '<div class="text-center">Cargando solicitudes...</div>';
+
+    fetch('/api/solicitudes/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.solicitudes && data.solicitudes.length > 0) {
+                listaSolicitudes.innerHTML = data.solicitudes.map(s => `
+                    <div class="solicitud-card" style="background-color: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                        <div class="d-flex justify-content-between">
+                            <strong>Cliente: @${escapeHtml(s.cliente_username)}</strong>
+                            <span class="badge ${getEstadoBadgeClass(s.estado)}">
+                                ${escapeHtml(s.estado_display)}
+                            </span>
+                        </div>
+                        <p><strong>Comisión:</strong> ${escapeHtml(s.comision_nombre)}</p>
+                        <p><strong>Descripción:</strong> ${escapeHtml(s.descripcion)}</p>
+                        <p><small>${escapeHtml(s.fecha)}</small></p>
+                        ${getBotonesSolicitud(s.id, s.estado)}
+                    </div>
+                `).join('');
+            } else {
+                listaSolicitudes.innerHTML = '<div class="empty-state">No has recibido solicitudes aún.</div>';
+            }
+        })
+        .catch(error => {
+            listaSolicitudes.innerHTML = '<div class="empty-state">Error al cargar las solicitudes.</div>';
+        });
+}
+
+function getEstadoBadgeClass(estado) {
+    switch(estado) {
+        case 'pendiente': return 'bg-warning';
+        case 'aceptada': return 'bg-success';
+        case 'rechazada': return 'bg-danger';
+        case 'finalizada': return 'bg-info';
+        default: return 'bg-secondary';
+    }
+}
+
+function getBotonesSolicitud(solicitudId, estado) {
+    if (estado === 'pendiente') {
+        return `
+            <div class="mt-2">
+                <button class="btn btn-success btn-sm" onclick="aceptarSolicitud(${solicitudId})">✅ Aceptar</button>
+                <button class="btn btn-danger btn-sm" onclick="rechazarSolicitud(${solicitudId})">❌ Rechazar</button>
+            </div>
+        `;
+    } else if (estado === 'aceptada') {
+        return `
+            <div class="mt-2">
+                <button class="btn btn-info btn-sm" onclick="finalizarEncargo(${solicitudId})">🎉 Finalizar encargo</button>
+            </div>
+        `;
+    }
+    return '';
+}
 
 // INICIALIZAR EVENTOS
 document.addEventListener('DOMContentLoaded', function() {
@@ -1607,6 +1638,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Cargar políticas al inicio
     recargarPoliticas();
+
+    // Recargar solicitudes
+    recargarSolicitudes();
 
     // Cerrar modales al hacer clic fuera
     window.onclick = function(event) {

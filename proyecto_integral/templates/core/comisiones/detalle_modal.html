@@ -29,12 +29,13 @@
         </div>
     {% endif %}
 
-    <p><strong>✅ Usos permitidos:</strong> {{ comision.get_usos_permitidos_display }}</p>
+    <p><strong> Usos permitidos:</strong> {{ comision.get_usos_permitidos_display }}</p>
 
-    <!-- ✅ SOLO mostrar formulario si el usuario es cliente y está logueado ✅ -->
+    <!-- SOLO mostrar formulario si el usuario es cliente y está logueado -->
     {% if user.is_authenticated and user.es_cliente %}
-        <form method="POST" action="{% url 'solicitud_create' comision.id %}" enctype="multipart/form-data" style="margin-top: 1rem;">
+        <form id="form-solicitud-encargo" method="POST" action="{% url 'solicitud_create' comision.id %}" enctype="multipart/form-data">
             {% csrf_token %}
+
             <div style="margin-bottom: 1rem;">
                 <label for="email" style="display: block; font-weight: bold;">Correo electrónico *</label>
                 <input type="email" id="email" name="email" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 5px;">
@@ -57,7 +58,7 @@
                     He leído y acepto los términos y la política del artista *
                 </label>
             </div>
-            <button type="submit" style="width: 100%; padding: 0.8rem; background-color: #333; color: white; border: none; border-radius: 30px; cursor: pointer;">
+            <button type="submit" id="btn-solicitar-encargo" style="width: 100%; padding: 0.8rem; background-color: #333; color: white; border: none; border-radius: 30px; cursor: pointer;">
                 📩 Solicitar encargo
             </button>
         </form>
@@ -68,3 +69,69 @@
         </div>
     {% endif %}
 </div>
+
+<script>
+console.log("🔵 Script del modal cargado");
+
+const userId = {{ user_id|default:0 }};
+console.log("🔵 userId en modal:", userId);
+
+const formSolicitud = document.getElementById('form-solicitud-encargo');
+console.log("🔵 formulario encontrado:", formSolicitud ? "SÍ" : "NO");
+
+if (formSolicitud) {
+    console.log("🔵 Añadiendo event listener al formulario");
+
+    formSolicitud.addEventListener('submit', function(e) {
+        console.log("🔵 Evento submit disparado");
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const btn = document.getElementById('btn-solicitar-encargo');
+
+        btn.disabled = true;
+        btn.textContent = 'Enviando...';
+
+        fetch(this.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': window.csrfToken || ''
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.textContent = '📩 Solicitar encargo';
+
+            console.log("🔵 Respuesta:", data);
+
+            if (data.success) {
+                mostrarMensaje(data.message, 'success');
+                const modal = document.getElementById('modal-detalle-comision');
+                if (modal) modal.style.display = 'none';
+
+                console.log("🔵 Redirigiendo a /cliente/" + userId + "/");
+                setTimeout(() => {
+                    if (userId > 0) {
+                        window.location.href = '/cliente/' + userId + '/';
+                    } else {
+                        window.location.href = '/buscar/comisiones/';
+                    }
+                }, 1500);
+            } else {
+                mostrarMensaje(data.error || 'Error al enviar la solicitud', 'error');
+            }
+        })
+        .catch(error => {
+            btn.disabled = false;
+            btn.textContent = '📩 Solicitar encargo';
+            mostrarMensaje('Error de conexión', 'error');
+            console.error("Error:", error);
+        });
+    });
+} else {
+    console.error("🔵 ERROR: No se encontró el formulario con id 'form-solicitud-encargo'");
+}
+</script>

@@ -235,13 +235,12 @@
     {% endif %}
 </div>
 
-<!-- Modales para cada comisión (se cargan dinámicamente) -->
-<div id="modal-comision" class="modal">
+<!-- Modales para cada comisión -->
+<div id="modal-detalle-comision" class="modal" style="display: none;">
     <div class="modal-contenido">
-        <span class="cerrar-modal" onclick="cerrarModal()">&times;</span>
+        <span class="cerrar-modal" onclick="cerrarModalDetalleComision()">&times;</span>
         <div id="modal-body">
-            <!-- Contenido cargado dinámicamente con AJAX -->
-            <p>Cargando...</p>
+            <!-- Contenido cargado dinámicamente -->
         </div>
     </div>
 </div>
@@ -249,6 +248,17 @@
 
 
 <script>
+const csrfToken = '{{ csrf_token }}';
+window.csrfToken = csrfToken;
+
+function mostrarMensaje(mensaje, tipo) {
+    const div = document.createElement('div');
+    div.textContent = mensaje;
+    div.style.cssText = `position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; z-index: 10000; color: white; background-color: ${tipo === 'success' ? '#28a745' : '#dc3545'};`;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 3000);
+}
+
     function toggleDropdown(id) {
         var dropdown = document.getElementById(id);
         if (dropdown.style.display === 'block') {
@@ -272,24 +282,36 @@
     }
     
     function abrirModalComision(comisionId) {
-        var modal = document.getElementById('modal-comision');
-        var modalBody = document.getElementById('modal-body');
-        
-        // Cargar contenido dinámicamente (AJAX)
-        fetch(`/comision/${comisionId}/detalle-modal/`)
-            .then(response => response.text())
-            .then(html => {
-                modalBody.innerHTML = html;
-                modal.style.display = 'flex';
-            })
-            .catch(error => {
-                modalBody.innerHTML = '<p>Error al cargar la información.</p>';
-                modal.style.display = 'flex';
+    var modal = document.getElementById('modal-detalle-comision');
+    var modalBody = document.getElementById('modal-body');
+
+    modal.style.display = 'flex';
+    modalBody.innerHTML = '<p>Cargando...</p>';
+
+    fetch(`/comision/${comisionId}/detalle-modal/`)
+        .then(response => response.text())
+        .then(html => {
+            modalBody.innerHTML = html;
+
+            const scripts = modalBody.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                if (oldScript.src) {
+                    newScript.src = oldScript.src;
+                } else {
+                    newScript.textContent = oldScript.textContent;
+                }
+                document.body.appendChild(newScript);
+                document.body.removeChild(newScript);
             });
-    }
+        })
+        .catch(error => {
+            modalBody.innerHTML = '<p>Error al cargar la información.</p>';
+        });
+}
     
-    function cerrarModal() {
-        document.getElementById('modal-comision').style.display = 'none';
+    function cerrarModalDetalleComision() {
+        document.getElementById('modal-detalle-comision').style.display = 'none';
     }
 </script>
 {% endblock %}
