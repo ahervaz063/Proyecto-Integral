@@ -277,6 +277,23 @@
 .item-portfolio:hover .portfolio-titulo {
     bottom: 0;
 }
+.error-border {
+    border: 1px solid #dc3545 !important;
+    background-color: #fff8f8;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Estilo para campos con error al hacer focus */
+.error-border:focus {
+    outline: none;
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
 </style>
 {% endblock %}
 
@@ -348,30 +365,10 @@
 
             <!-- Panel Políticas -->
             <div id="politicas" class="panel oculto">
-                <div>
-                    {% for politica in user.politicas.all %}
-                        <div class="policy-card">
-                            <div class="policy-icono">⚙️</div>
-                            <div class="policy-info">
-                                <div class="policy-nombre">{{ politica.nombre }}</div>
-                                <div class="policy-desc">{{ politica.info_general|truncatewords:10 }}</div>
-                            </div>
-                            <div class="comision-acciones">
-                                <span>✏️</span>
-                                <span>🗑️</span>
-                            </div>
-                        </div>
-                    {% empty %}
-                        <div class="policy-card">
-                            <div class="policy-icono">⚙️</div>
-                            <div class="policy-info">
-                                <div class="policy-nombre">Sin políticas</div>
-                                <div class="policy-desc">Añade políticas usando el botón "+ Añadir política".</div>
-                            </div>
-                        </div>
-                    {% endfor %}
+                <div id="lista-politicas">
+                    <div class="text-center">Cargando políticas...</div>
                 </div>
-                <button class="btn-mas" onclick="document.getElementById('modal-politicas').style.display='flex'">+ Añadir política</button>
+                <button class="btn-mas" onclick="abrirModalCrearPolitica()">+ Añadir política</button>
             </div>
 
             <!-- Panel Solicitudes -->
@@ -456,68 +453,68 @@
 
 
 
-<!-- Modal / Popup para crear política -->
+<!-- Modal / Popup para crear/editar política -->
 <div id="modal-politicas" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
     <div style="background-color: white; width: 80%; max-width: 1000px; border-radius: 20px; padding: 2rem; max-height: 90vh; overflow-y: auto;">
-        
+
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-            <h2 style="margin: 0;">Políticas</h2>
-            <button onclick="document.getElementById('modal-politicas').style.display='none'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖️</button>
+            <h2 id="modal-politicas-titulo" style="margin: 0;">Políticas</h2>
+            <button onclick="cerrarModalPoliticas()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖️</button>
         </div>
-        
-        <form method="POST" action="{% url 'politica_create' %}">
+
+        <div id="form-politicas-errors" style="color: red; margin-bottom: 1rem; display: none;"></div>
+
+        <form id="form-crear-politica" enctype="multipart/form-data">
             {% csrf_token %}
-            
+
             <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
                 <!-- Columna izquierda -->
                 <div style="flex: 1; min-width: 250px;">
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="info_general" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Info general</label>
-                        <textarea id="info_general" name="info_general" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Describe tu política general..."></textarea>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="politica_nombre" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Nombre de la política *</label>
+                        <input type="text" id="politica_nombre" name="nombre" required style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">
                     </div>
-                    
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="metodos_pago" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Métodos de pago</label>
-                        <textarea id="metodos_pago" name="metodos_pago" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="PayPal, transferencia, etc..."></textarea>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="info_general" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Info general</label>
+                        <textarea id="info_general" name="info_general" rows="4" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Describe tu política general..."></textarea>
                     </div>
-                    
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="revisiones" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Revisiones</label>
-                        <textarea id="revisiones" name="revisiones" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Número de revisiones gratuitas, coste de revisiones extra..."></textarea>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="metodos_pago" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Métodos de pago</label>
+                        <textarea id="metodos_pago" name="metodos_pago" rows="3" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="PayPal, transferencia, etc..."></textarea>
                     </div>
-                    
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="tiempo_entrega" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Tiempo de entrega</label>
-                        <textarea id="tiempo_entrega" name="tiempo_entrega" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Plazos estimados..."></textarea>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="revisiones" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Revisiones</label>
+                        <textarea id="revisiones" name="revisiones" rows="3" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Número de revisiones gratuitas, coste de revisiones extra..."></textarea>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="tiempo_entrega" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Tiempo de entrega</label>
+                        <textarea id="tiempo_entrega" name="tiempo_entrega" rows="3" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Plazos estimados..."></textarea>
                     </div>
                 </div>
-                
+
                 <!-- Columna derecha -->
                 <div style="flex: 1; min-width: 250px;">
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="uso" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Uso</label>
-                        <textarea id="uso" name="uso" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Personal, comercial, etc..."></textarea>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="uso" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Uso</label>
+                        <textarea id="uso" name="uso" rows="3" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Personal, comercial, etc..."></textarea>
                     </div>
-                    
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="derechos_propiedad" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Derechos de propiedad intelectual</label>
-                        <textarea id="derechos_propiedad" name="derechos_propiedad" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Cesión de derechos, atribución, etc..."></textarea>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="derechos_propiedad" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Derechos de propiedad intelectual</label>
+                        <textarea id="derechos_propiedad" name="derechos_propiedad" rows="3" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Cesión de derechos, atribución, etc..."></textarea>
                     </div>
-                    
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="reembolsos" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Reembolsos</label>
-                        <textarea id="reembolsos" name="reembolsos" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Condiciones para reembolsos..."></textarea>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="reembolsos" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Reembolsos</label>
+                        <textarea id="reembolsos" name="reembolsos" rows="3" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Condiciones para reembolsos..."></textarea>
                     </div>
-                    
-                    <div style="margin-bottom: 1.5rem;">
-                        <label for="comunicacion" style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Comunicación</label>
-                        <textarea id="comunicacion" name="comunicacion" rows="4" style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Canales de comunicación, tiempos de respuesta..."></textarea>
+                    <div style="margin-bottom: 1rem;">
+                        <label for="comunicacion" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Comunicación</label>
+                        <textarea id="comunicacion" name="comunicacion" rows="3" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Canales de comunicación, tiempos de respuesta..."></textarea>
                     </div>
                 </div>
             </div>
-            
+
             <div style="text-align: center; margin-top: 2rem;">
-                <button type="submit" style="background-color: #333; color: white; padding: 0.8rem 2rem; border: none; border-radius: 30px; cursor: pointer;">Crear política</button>
+                <button type="submit" id="btn-guardar-politica" style="background-color: #333; color: white; padding: 0.8rem 2rem; border: none; border-radius: 30px; cursor: pointer;">Crear política</button>
             </div>
         </form>
     </div>
@@ -822,6 +819,9 @@
     </div>
 </div>
 
+
+
+
 <script>
 // VARIABLES GLOBALES
 let comisionEditandoId = null;
@@ -913,28 +913,56 @@ function abrirModalCrearComision() {
     document.getElementById('preview-comision-image').style.display = 'none';
     document.getElementById('preview-comision-text').style.display = 'flex';
     document.getElementById('form-errors').style.display = 'none';
-    document.getElementById('modal-comision').style.display = 'flex';
 
+    // Cargar políticas actualizadas
+    fetch('/api/politicas/')
+        .then(response => response.json())
+        .then(data => {
+            const selectPolitica = document.getElementById('politica');
+            if (data.politicas && data.politicas.length > 0) {
+                selectPolitica.innerHTML = '<option value="">Selecciona una política (opcional)</option>' +
+                    data.politicas.map(p => `<option value="${p.id}">${escapeHtml(p.nombre)}</option>`).join('');
+            } else {
+                selectPolitica.innerHTML = '<option value="">No hay políticas disponibles</option>';
+            }
+        })
+        .catch(error => console.error("Error cargando políticas:", error));
+
+    // Habilitar el botón
     const btn = document.getElementById('btn-crear-comision');
     if (btn) {
         btn.disabled = false;
         btn.textContent = 'Crear comisión';
     }
 
+    document.getElementById('modal-comision').style.display = 'flex';
 }
+
 
 function abrirModalEditarComision(comisionId) {
     console.log("Editando comisión con ID:", comisionId);
     comisionEditandoId = comisionId;
     document.getElementById('modal-comision-titulo').textContent = 'Editar comisión';
     document.getElementById('form-errors').style.display = 'none';
-    console.log("🔵 Estableciendo comisionEditandoId a:", comisionId);
 
-    // Cargar datos de la comisión
+    // Primero cargar las políticas del artista
+    fetch('/api/politicas/')
+        .then(response => response.json())
+        .then(data => {
+            const selectPolitica = document.getElementById('politica');
+            if (data.politicas && data.politicas.length > 0) {
+                selectPolitica.innerHTML = '<option value="">Selecciona una política (opcional)</option>' +
+                    data.politicas.map(p => `<option value="${p.id}">${escapeHtml(p.nombre)}</option>`).join('');
+            } else {
+                selectPolitica.innerHTML = '<option value="">No hay políticas disponibles</option>';
+            }
+        })
+        .catch(error => console.error("Error cargando políticas:", error));
+
+    // Luego cargar los datos de la comisión
     fetch(`/comisiones/${comisionId}/datos/`)
         .then(response => response.json())
         .then(data => {
-            console.log("Datos recibidos:", data);
             if (data.success) {
                 const c = data.comision;
                 document.getElementById('nombre_comision').value = c.nombre;
@@ -942,7 +970,12 @@ function abrirModalEditarComision(comisionId) {
                 document.getElementById('slots').value = c.slots;
                 document.getElementById('tiempo_estimado').value = c.tiempo_estimado;
                 document.getElementById('descripcion_comision').value = c.descripcion;
-                document.getElementById('politica').value = c.politica_id;
+
+                // Esperar un poco para que el select se haya cargado
+                setTimeout(() => {
+                    document.getElementById('politica').value = c.politica_id;
+                    console.log("Valor seleccionado en select:", document.getElementById('politica').value);
+                }, 100);
 
                 // Usos permitidos
                 const usosSelect = document.getElementById('usos_permitidos');
@@ -1348,6 +1381,206 @@ function enviarFormularioPortfolio(event) {
     });
 }
 
+
+
+// POLÍTICAS
+let politicaEditandoId = null;
+
+function abrirModalCrearPolitica() {
+    politicaEditandoId = null;
+    document.getElementById('modal-politicas-titulo').textContent = 'Crear política';
+    document.getElementById('btn-guardar-politica').textContent = 'Crear política';
+    document.getElementById('form-crear-politica').reset();
+    document.getElementById('form-politicas-errors').style.display = 'none';
+    document.getElementById('modal-politicas').style.display = 'flex';
+}
+
+function abrirModalEditarPolitica(politicaId) {
+    politicaEditandoId = politicaId;
+    document.getElementById('modal-politicas-titulo').textContent = 'Editar política';
+    document.getElementById('btn-guardar-politica').textContent = 'Actualizar política';
+    document.getElementById('form-politicas-errors').style.display = 'none';
+
+    fetch(`/politicas/${politicaId}/datos/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const p = data.politica;
+                document.getElementById('politica_nombre').value = p.nombre;
+                document.getElementById('info_general').value = p.info_general;
+                document.getElementById('metodos_pago').value = p.metodos_pago;
+                document.getElementById('revisiones').value = p.revisiones;
+                document.getElementById('tiempo_entrega').value = p.tiempo_entrega;
+                document.getElementById('uso').value = p.uso;
+                document.getElementById('derechos_propiedad').value = p.derechos_propiedad;
+                document.getElementById('reembolsos').value = p.reembolsos;
+                document.getElementById('comunicacion').value = p.comunicacion;
+                document.getElementById('modal-politicas').style.display = 'flex';
+            }
+        })
+        .catch(error => {
+            mostrarMensaje('Error al cargar los datos', 'error');
+        });
+}
+
+function cerrarModalPoliticas() {
+    document.getElementById('modal-politicas').style.display = 'none';
+    politicaEditandoId = null;
+}
+
+function enviarFormularioPolitica(event) {
+    event.preventDefault();
+
+    const form = document.getElementById('form-crear-politica');
+    const formData = new FormData(form);
+    const btn = document.getElementById('btn-guardar-politica');
+    const url = politicaEditandoId ? `/politicas/${politicaEditandoId}/editar/` : '/politicas/crear/';
+
+    btn.disabled = true;
+    btn.textContent = 'Guardando...';
+
+    // Limpiar errores anteriores
+    document.querySelectorAll('.error-message').forEach(el => el.remove());
+    document.querySelectorAll('.error-border').forEach(el => el.classList.remove('error-border'));
+
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+
+        if (data.success) {
+            cerrarModalPoliticas();
+            mostrarMensaje(data.message, 'success');
+            recargarPoliticas();
+        } else {
+            // Mostrar errores debajo de cada campo
+            if (data.errors) {
+                for (const [field, errorMsg] of Object.entries(data.errors)) {
+                    let inputElement = null;
+
+                    // Buscar el campo correspondiente
+                    switch(field) {
+                        case 'nombre':
+                            inputElement = document.getElementById('politica_nombre');
+                            break;
+                        case 'info_general':
+                            inputElement = document.getElementById('info_general');
+                            break;
+                        case 'metodos_pago':
+                            inputElement = document.getElementById('metodos_pago');
+                            break;
+                        case 'revisiones':
+                            inputElement = document.getElementById('revisiones');
+                            break;
+                        case 'tiempo_entrega':
+                            inputElement = document.getElementById('tiempo_entrega');
+                            break;
+                        case 'uso':
+                            inputElement = document.getElementById('uso');
+                            break;
+                        case 'derechos_propiedad':
+                            inputElement = document.getElementById('derechos_propiedad');
+                            break;
+                        case 'reembolsos':
+                            inputElement = document.getElementById('reembolsos');
+                            break;
+                        case 'comunicacion':
+                            inputElement = document.getElementById('comunicacion');
+                            break;
+                    }
+
+                    if (inputElement) {
+                        // Añadir borde rojo
+                        inputElement.classList.add('error-border');
+                        inputElement.style.border = '1px solid #dc3545';
+
+                        // Crear mensaje de error debajo del campo
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'error-message';
+                        errorDiv.style.color = '#dc3545';
+                        errorDiv.style.fontSize = '0.8rem';
+                        errorDiv.style.marginTop = '0.3rem';
+                        errorDiv.textContent = errorMsg;
+
+                        // Insertar después del padre del input
+                        inputElement.parentNode.appendChild(errorDiv);
+                    }
+                }
+            }
+            btn.textContent = politicaEditandoId ? 'Actualizar política' : 'Crear política';
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.textContent = politicaEditandoId ? 'Actualizar política' : 'Crear política';
+        mostrarMensaje('Error de conexión. Inténtalo de nuevo.', 'error');
+    });
+}
+function eliminarPolitica(politicaId, nombre) {
+    if (!confirm(`¿Eliminar la política "${nombre}"?`)) return;
+
+    fetch(`/politicas/${politicaId}/eliminar/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarMensaje(data.message, 'success');
+            recargarPoliticas();
+        } else {
+            mostrarMensaje(data.error || 'Error al eliminar', 'error');
+        }
+    })
+    .catch(error => {
+        mostrarMensaje('Error de conexión', 'error');
+    });
+}
+
+function recargarPoliticas() {
+    const listaPoliticas = document.getElementById('lista-politicas');
+    if (!listaPoliticas) return;
+
+    listaPoliticas.innerHTML = '<div class="text-center">Cargando políticas...</div>';
+
+    fetch('/api/politicas/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.politicas && data.politicas.length > 0) {
+                listaPoliticas.innerHTML = data.politicas.map(p => `
+                    <div class="policy-card">
+                        <div class="policy-icono">⚙️</div>
+                        <div class="policy-info">
+                            <div class="policy-nombre">${escapeHtml(p.nombre)}</div>
+                            <div class="policy-desc">${escapeHtml(p.info_general)}</div>
+                        </div>
+                        <div class="comision-acciones">
+                            <span class="icono-accion" onclick="abrirModalEditarPolitica(${p.id})">✏️</span>
+                            <span class="icono-accion" onclick="eliminarPolitica(${p.id}, '${escapeHtml(p.nombre)}')">🗑️</span>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                listaPoliticas.innerHTML = '<div class="policy-card"><div class="policy-info"><div class="policy-nombre">Sin políticas</div><div class="policy-desc">Añade políticas usando el botón "+ Añadir política".</div></div></div>';
+            }
+        })
+        .catch(error => {
+            listaPoliticas.innerHTML = '<div class="empty-state">Error al cargar las políticas.</div>';
+        });
+}
+
+
+
 // INICIALIZAR EVENTOS
 document.addEventListener('DOMContentLoaded', function() {
     // Formulario de comisión
@@ -1360,12 +1593,20 @@ document.addEventListener('DOMContentLoaded', function() {
     if (portfolioForm) {
         portfolioForm.addEventListener('submit', enviarFormularioPortfolio);
     }
+    // Formulario de políticas
+    const politicasForm = document.getElementById('form-crear-politica');
+    if (politicasForm) {
+        politicasForm.addEventListener('submit', enviarFormularioPolitica);
+    }
 
     // Cargar las comisiones al inicio
     recargarListaComisiones();
 
     // Recargar portfolio al iniciar
     recargarPortfolio();
+
+    // Cargar políticas al inicio
+    recargarPoliticas();
 
     // Cerrar modales al hacer clic fuera
     window.onclick = function(event) {

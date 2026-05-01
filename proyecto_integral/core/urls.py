@@ -32,7 +32,9 @@ urlpatterns = [
     path('comisiones/<int:pk>/eliminar/', views.ComisionDeleteView.as_view(), name='comision_delete'),
 
     # Políticas
+    path('api/politicas/', views.ApiPoliticasView.as_view(), name='api_politicas'),
     path('politicas/crear/', views.PoliticaCreateView.as_view(), name='politica_create'),
+    path('politicas/<int:pk>/datos/', views.PoliticaDetailView.as_view(), name='politica_datos'),
     path('politicas/<int:pk>/editar/', views.PoliticaUpdateView.as_view(), name='politica_update'),
     path('politicas/<int:pk>/eliminar/', views.PoliticaDeleteView.as_view(), name='politica_delete'),
 

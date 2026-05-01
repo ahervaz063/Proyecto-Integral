@@ -1,6 +1,6 @@
 # core/forms.py
 from django import forms
-from .models import Comision, Usuario, SolicitudEncargo, Resena
+from .models import Comision, Usuario, SolicitudEncargo, Resena, Politica
 from django.contrib.auth.forms import UserCreationForm
 
 class ComisionForm(forms.ModelForm):
@@ -105,4 +105,20 @@ class ResenaForm(forms.ModelForm):
             'puntuacion': forms.Select(choices=[(i, f"{i} estrellas") for i in range(1, 6)]),
             'comentario': forms.Textarea(
                 attrs={'rows': 4, 'placeholder': 'Cuéntanos tu experiencia con el artista...'}),
+        }
+
+
+class PoliticaForm(forms.ModelForm):
+    class Meta:
+        model = Politica
+        exclude = ['artista']
+        widgets = {
+            'info_general': forms.Textarea(attrs={'rows': 3}),
+            'metodos_pago': forms.Textarea(attrs={'rows': 3}),
+            'revisiones': forms.Textarea(attrs={'rows': 3}),
+            'tiempo_entrega': forms.Textarea(attrs={'rows': 3}),
+            'uso': forms.Textarea(attrs={'rows': 3}),
+            'derechos_propiedad': forms.Textarea(attrs={'rows': 3}),
+            'reembolsos': forms.Textarea(attrs={'rows': 3}),
+            'comunicacion': forms.Textarea(attrs={'rows': 3}),
         }

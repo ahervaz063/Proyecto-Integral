@@ -5,8 +5,8 @@ from django.views.generic import ListView, DetailView, CreateView, UpdateView, D
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.views import LoginView as AuthLoginView
-from core.models import Comision, Usuario, ComisionGuardada, Perfil, SolicitudEncargo, Resena, PortfolioImagen
-from core.forms import ComisionForm, RegistroForm, SolicitudEncargoForm, ResenaForm
+from core.models import Comision, Usuario, ComisionGuardada, Perfil, SolicitudEncargo, Resena, PortfolioImagen, Politica
+from core.forms import ComisionForm, RegistroForm, SolicitudEncargoForm, ResenaForm, PoliticaForm
 from django.db.models import Avg, Count, Q
 from core.mixins import ClientRequiredMixin, ArtistRequiredMixin
 
@@ -348,16 +348,102 @@ class ApiComisionesArtistaView(ArtistRequiredMixin, View):
 
 
 # POLÍTICAS
-class PoliticaCreateView(TemplateView):
-    template_name = 'core/politicas/form.html'
+class ApiPoliticasView(ArtistRequiredMixin, View):
+    """Obtener todas las políticas del artista"""
+
+    def get(self, request):
+        politicas = Politica.objects.filter(artista=request.user).order_by('-creada_en')
+        data = []
+        for p in politicas:
+            data.append({
+                'id': p.id,
+                'nombre': p.nombre,
+                'info_general': p.info_general[:100],
+            })
+        return JsonResponse({'politicas': data})
 
 
-class PoliticaUpdateView(TemplateView):
-    template_name = 'core/politicas/form.html'
+class PoliticaDetailView(ArtistRequiredMixin, View):
+    """Obtener datos de una política para editar"""
+
+    def get(self, request, pk):
+        politica = get_object_or_404(Politica, id=pk, artista=request.user)
+        return JsonResponse({
+            'success': True,
+            'politica': {
+                'id': politica.id,
+                'nombre': politica.nombre,
+                'info_general': politica.info_general,
+                'metodos_pago': politica.metodos_pago,
+                'revisiones': politica.revisiones,
+                'tiempo_entrega': politica.tiempo_entrega,
+                'uso': politica.uso,
+                'derechos_propiedad': politica.derechos_propiedad,
+                'reembolsos': politica.reembolsos,
+                'comunicacion': politica.comunicacion,
+            }
+        })
 
 
-class PoliticaDeleteView(TemplateView):
-    template_name = 'core/politicas/confirm_delete.html'
+class PoliticaCreateView(ArtistRequiredMixin, View):
+    """Crear política con AJAX"""
+
+    def post(self, request):
+        form = PoliticaForm(request.POST)
+
+        if form.is_valid():
+            politica = form.save(commit=False)
+            politica.artista = request.user
+            politica.save()
+
+            return JsonResponse({
+                'success': True,
+                'message': 'Política creada correctamente.',
+                'politica': {
+                    'id': politica.id,
+                    'nombre': politica.nombre,
+                    'info_general': politica.info_general[:100],
+                }
+            })
+        else:
+            errors = {}
+            for field, error_list in form.errors.items():
+                errors[field] = error_list[0]
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+
+
+class PoliticaUpdateView(ArtistRequiredMixin, View):
+    """Actualizar política con AJAX"""
+
+    def post(self, request, pk):
+        politica = get_object_or_404(Politica, id=pk, artista=request.user)
+        form = PoliticaForm(request.POST, instance=politica)
+
+        if form.is_valid():
+            politica = form.save()
+            return JsonResponse({
+                'success': True,
+                'message': 'Política actualizada correctamente.',
+                'politica': {
+                    'id': politica.id,
+                    'nombre': politica.nombre,
+                    'info_general': politica.info_general[:100],
+                }
+            })
+        else:
+            errors = {}
+            for field, error_list in form.errors.items():
+                errors[field] = error_list[0]
+            return JsonResponse({'success': False, 'errors': errors}, status=400)
+
+
+class PoliticaDeleteView(ArtistRequiredMixin, View):
+    """Eliminar política con AJAX"""
+
+    def post(self, request, pk):
+        politica = get_object_or_404(Politica, id=pk, artista=request.user)
+        politica.delete()
+        return JsonResponse({'success': True, 'message': 'Política eliminada correctamente.'})
 
 
 # PORTFOLIO
