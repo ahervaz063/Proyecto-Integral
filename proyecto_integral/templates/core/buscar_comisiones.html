@@ -89,7 +89,6 @@
         color: #28a745;
         font-size: 1.2rem;
     }
-    /* Modal */
     .modal {
         display: none;
         position: fixed;
@@ -125,31 +124,29 @@
 <div class="filtros-bar">
     <div class="container">
         <div class="filtros-container">
-            <!-- Desplegable Categorías -->
-    <div class="dropdown">
-        <button class="filtro-btn dropdown-toggle" onclick="toggleDropdown('categorias-dropdown')">
-            📂 Categorías {% if categoria_seleccionada %}✓{% endif %}
-        </button>
-        <div id="categorias-dropdown" class="dropdown-contenido">
-            <a href="?{% if precio_seleccionado %}precio={{ precio_seleccionado }}&{% endif %}{% if valoracion_seleccionada %}valoracion={{ valoracion_seleccionada }}&{% endif %}">Todas</a>
-            <a href="?categoria=ilustracion{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Ilustración</a>
-            <a href="?categoria=diseno{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Diseño</a>
-            <a href="?categoria=diseno_grafico{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Diseño Gráfico</a>
-            <a href="?categoria=pixel_art{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Pixel Art</a>
-            <a href="?categoria=3d{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">3D</a>
-            <a href="?categoria=poster{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Póster</a>
-            <a href="?categoria=concept_art{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Concept Art</a>
-            <a href="?categoria=retrato{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Retrato</a>
-            <a href="?categoria=bg{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Background</a>
-            <a href="?categoria=personaje{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Personaje</a>
-            <a href="?categoria=videojuego{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Videojuego</a>
-            <a href="?categoria=libro{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Libro</a>
-            <a href="?categoria=branding{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Branding</a>
-            <a href="?categoria=comic_manga{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Cómic / Manga</a>
-        </div>
-    </div>
-            
-            <!-- Desplegable Precio -->
+            <div class="dropdown">
+                <button class="filtro-btn dropdown-toggle" onclick="toggleDropdown('categorias-dropdown')">
+                    📂 Categorías {% if categoria_seleccionada %}✓{% endif %}
+                </button>
+                <div id="categorias-dropdown" class="dropdown-contenido">
+                    <a href="?{% if precio_seleccionado %}precio={{ precio_seleccionado }}&{% endif %}{% if valoracion_seleccionada %}valoracion={{ valoracion_seleccionada }}&{% endif %}">Todas</a>
+                    <a href="?categoria=ilustracion{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Ilustración</a>
+                    <a href="?categoria=diseno{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Diseño</a>
+                    <a href="?categoria=diseno_grafico{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Diseño Gráfico</a>
+                    <a href="?categoria=pixel_art{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Pixel Art</a>
+                    <a href="?categoria=3d{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">3D</a>
+                    <a href="?categoria=poster{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Póster</a>
+                    <a href="?categoria=concept_art{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Concept Art</a>
+                    <a href="?categoria=retrato{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Retrato</a>
+                    <a href="?categoria=bg{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Background</a>
+                    <a href="?categoria=personaje{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Personaje</a>
+                    <a href="?categoria=videojuego{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Videojuego</a>
+                    <a href="?categoria=libro{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Libro</a>
+                    <a href="?categoria=branding{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Branding</a>
+                    <a href="?categoria=comic_manga{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Cómic / Manga</a>
+                </div>
+            </div>
+
             <div class="dropdown">
                 <button class="filtro-btn dropdown-toggle" onclick="toggleDropdown('precio-dropdown')">
                     💰 Precio {% if precio_seleccionado %}✓{% endif %}
@@ -160,8 +157,7 @@
                     <a href="?{% if q %}q={{ q }}&{% endif %}{% if categoria_seleccionada %}categoria={{ categoria_seleccionada }}&{% endif %}precio=desc">Mayor precio</a>
                 </div>
             </div>
-            
-            <!-- Desplegable Valoraciones -->
+
             <div class="dropdown">
                 <button class="filtro-btn dropdown-toggle" onclick="toggleDropdown('valoracion-dropdown')">
                     ⭐ Valoración {% if valoracion_seleccionada %}✓{% endif %}
@@ -179,7 +175,7 @@
 <!-- Listado de comisiones -->
 <div class="container py-4">
     <h2 class="text-center mb-4">Comisiones disponibles</h2>
-    
+
     {% if comisiones %}
         <div class="row">
             {% for comision in comisiones %}
@@ -194,23 +190,27 @@
                             <div class="comision-titulo">{{ comision.nombre }}</div>
                             <div class="comision-artista">🎨 @{{ comision.artista.username }}</div>
                             <div class="comision-precio">{{ comision.precio }}€</div>
-                            <!-- Guardar comisión SÓLO a clientes logeados -->
+
                             {% if user.is_authenticated and user.es_cliente %}
-                                <form method="POST" action="{% url 'guardar_comision' comision.id %}" style="display: inline;">
-                                    {% csrf_token %}
-                                    {% if comision.id in comisiones_guardadas_ids %}
-                                        <button type="submit" class="btn btn-sm btn-danger mt-2">❤️ Guardado</button>
-                                    {% else %}
-                                        <button type="submit" class="btn btn-sm btn-outline-danger mt-2">🤍 Guardar</button>
-                                    {% endif %}
-                                </form>
+                                {% if comision.id in comisiones_solicitadas_ids %}
+                                    <span class="badge bg-secondary mt-2" style="display: inline-block; width: 100%;">⏳ Ya solicitado</span>
+                                {% else %}
+                                    <form method="POST" action="{% url 'guardar_comision' comision.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        {% if comision.id in comisiones_guardadas_ids %}
+                                            <button type="submit" class="btn btn-sm btn-danger mt-2">❤️ Guardado</button>
+                                        {% else %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger mt-2">🤍 Guardar</button>
+                                        {% endif %}
+                                    </form>
+                                {% endif %}
                             {% endif %}
                         </div>
                     </div>
                 </div>
             {% endfor %}
         </div>
-        
+
         <!-- Paginación -->
         {% if is_paginated %}
             <nav class="mt-4">
@@ -245,8 +245,6 @@
     </div>
 </div>
 
-
-
 <script>
 const csrfToken = '{{ csrf_token }}';
 window.csrfToken = csrfToken;
@@ -259,40 +257,35 @@ function mostrarMensaje(mensaje, tipo) {
     setTimeout(() => div.remove(), 3000);
 }
 
-    function toggleDropdown(id) {
-        var dropdown = document.getElementById(id);
-        if (dropdown.style.display === 'block') {
-            dropdown.style.display = 'none';
-        } else {
-            // Cerrar todos los dropdowns
-            document.querySelectorAll('.dropdown-contenido').forEach(function(el) {
-                el.style.display = 'none';
-            });
-            dropdown.style.display = 'block';
-        }
+function toggleDropdown(id) {
+    var dropdown = document.getElementById(id);
+    if (dropdown.style.display === 'block') {
+        dropdown.style.display = 'none';
+    } else {
+        document.querySelectorAll('.dropdown-contenido').forEach(function(el) {
+            el.style.display = 'none';
+        });
+        dropdown.style.display = 'block';
     }
-    
-    // Cerrar dropdowns al hacer clic fuera
-    window.onclick = function(event) {
-        if (!event.target.matches('.dropdown-toggle')) {
-            document.querySelectorAll('.dropdown-contenido').forEach(function(el) {
-                el.style.display = 'none';
-            });
-        }
+}
+
+window.onclick = function(event) {
+    if (!event.target.matches('.dropdown-toggle')) {
+        document.querySelectorAll('.dropdown-contenido').forEach(function(el) {
+            el.style.display = 'none';
+        });
     }
-    
-    function abrirModalComision(comisionId) {
+}
+
+function abrirModalComision(comisionId) {
     var modal = document.getElementById('modal-detalle-comision');
     var modalBody = document.getElementById('modal-body');
-
     modal.style.display = 'flex';
     modalBody.innerHTML = '<p>Cargando...</p>';
-
-    fetch(`/comision/${comisionId}/detalle-modal/`)
+    fetch('/comision/' + comisionId + '/detalle-modal/')
         .then(response => response.text())
         .then(html => {
             modalBody.innerHTML = html;
-
             const scripts = modalBody.querySelectorAll('script');
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
@@ -309,9 +302,9 @@ function mostrarMensaje(mensaje, tipo) {
             modalBody.innerHTML = '<p>Error al cargar la información.</p>';
         });
 }
-    
-    function cerrarModalDetalleComision() {
-        document.getElementById('modal-detalle-comision').style.display = 'none';
-    }
+
+function cerrarModalDetalleComision() {
+    document.getElementById('modal-detalle-comision').style.display = 'none';
+}
 </script>
 {% endblock %}

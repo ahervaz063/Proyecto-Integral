@@ -54,6 +54,10 @@ urlpatterns = [
     path('solicitud/<int:solicitud_id>/cancelar/', views.cancelar_solicitud, name='cancelar_solicitud'),
     path('solicitud/<int:solicitud_id>/finalizar/', views.finalizar_encargo, name='finalizar_encargo'),
     path('api/solicitudes/', views.ApiSolicitudesView.as_view(), name='api_solicitudes'),
+    path('solicitud/<int:solicitud_id>/cancelar-ajax/', views.CancelarSolicitudClienteView.as_view(), name='cancelar_solicitud_ajax'),
+    path('solicitud/<int:solicitud_id>/aceptar-ajax/', views.AceptarSolicitudView.as_view(), name='aceptar_solicitud_ajax'),
+    path('solicitud/<int:solicitud_id>/rechazar-ajax/', views.RechazarSolicitudView.as_view(), name='rechazar_solicitud_ajax'),
+    path('solicitud/<int:solicitud_id>/finalizar-ajax/', views.FinalizarEncargoView.as_view(), name='finalizar_encargo_ajax'),
 
     # Reseñas
     path('resena/crear/<int:solicitud_id>/', views.ResenaCreateView.as_view(), name='resena_create'),

@@ -293,7 +293,7 @@
                             </div>
                             <div class="comision-desc">{{ solicitud.descripcion_idea|truncatewords:15 }}</div>
                             {% if solicitud.estado == 'pendiente' %}
-                                <a href="{% url 'cancelar_solicitud' solicitud.id %}" class="btn-accion" onclick="return confirm('¿Cancelar solicitud?')">Cancelar</a>
+                                <button class="btn-accion" onclick="cancelarSolicitudCliente({{ solicitud.id }})">Cancelar</button>
                             {% endif %}
                         </div>
                         <div class="estado estado-{{ solicitud.estado }}">
@@ -485,6 +485,34 @@
         .catch(error => {
             listaSolicitudes.innerHTML = '<div class="empty-state">Error al cargar tus solicitudes.</div>';
         });
+}
+
+function cancelarSolicitudCliente(solicitudId) {
+    if (!confirm('¿Cancelar esta solicitud?')) return;
+
+    fetch(`/solicitud/${solicitudId}/cancelar-ajax/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarMensaje(data.message, 'success');
+            // Eliminar la tarjeta de solicitud del DOM
+            const tarjeta = document.querySelector(`.solicitud-card[data-id="${solicitudId}"]`);
+            if (tarjeta) tarjeta.remove();
+            // Recargar la lista (opcional, para mantener consistencia)
+            recargarSolicitudesCliente();
+        } else {
+            mostrarMensaje(data.error || 'Error al cancelar', 'error');
+        }
+    })
+    .catch(error => {
+        mostrarMensaje('Error de conexión', 'error');
+    });
 }
 
     function previewFotoPerfil(event) {

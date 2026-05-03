@@ -1551,6 +1551,8 @@ function recargarPoliticas() {
         });
 }
 
+
+//SOLICITUDES
 function recargarSolicitudes() {
     const listaSolicitudes = document.getElementById('lista-solicitudes');
     if (!listaSolicitudes) return;
@@ -1562,7 +1564,7 @@ function recargarSolicitudes() {
         .then(data => {
             if (data.solicitudes && data.solicitudes.length > 0) {
                 listaSolicitudes.innerHTML = data.solicitudes.map(s => `
-                    <div class="solicitud-card" style="background-color: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                    <div class="solicitud-card" data-id="${s.id}" style="background-color: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
                         <div class="d-flex justify-content-between">
                             <strong>Cliente: @${escapeHtml(s.cliente_username)}</strong>
                             <span class="badge ${getEstadoBadgeClass(s.estado)}">
@@ -1610,6 +1612,110 @@ function getBotonesSolicitud(solicitudId, estado) {
         `;
     }
     return '';
+}
+
+
+function aceptarSolicitud(solicitudId) {
+    if (!confirm('¿Aceptar esta solicitud? Se ocupará un slot.')) return;
+
+    fetch(`/solicitud/${solicitudId}/aceptar-ajax/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarMensaje(data.message, 'success');
+            // Actualizar el estado de la solicitud en el DOM
+            actualizarEstadoSolicitud(solicitudId, 'aceptada', 'Aceptada');
+            recargarListaComisiones(); // Actualizar slots
+        } else {
+            mostrarMensaje(data.error || 'Error al aceptar', 'error');
+        }
+    })
+    .catch(error => {
+        mostrarMensaje('Error de conexión', 'error');
+    });
+}
+
+function rechazarSolicitud(solicitudId) {
+    if (!confirm('¿Rechazar esta solicitud?')) return;
+
+    fetch(`/solicitud/${solicitudId}/rechazar-ajax/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarMensaje(data.message, 'success');
+            actualizarEstadoSolicitud(solicitudId, 'rechazada', 'Rechazada');
+        } else {
+            mostrarMensaje(data.error || 'Error al rechazar', 'error');
+        }
+    })
+    .catch(error => {
+        mostrarMensaje('Error de conexión', 'error');
+    });
+}
+
+function finalizarEncargo(solicitudId) {
+    if (!confirm('¿Finalizar este encargo? El cliente podrá dejarte una reseña.')) return;
+
+    fetch(`/solicitud/${solicitudId}/finalizar-ajax/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarMensaje(data.message, 'success');
+            actualizarEstadoSolicitud(solicitudId, 'finalizada', 'Finalizada');
+        } else {
+            mostrarMensaje(data.error || 'Error al finalizar', 'error');
+        }
+    })
+    .catch(error => {
+        mostrarMensaje('Error de conexión', 'error');
+    });
+}
+
+function actualizarEstadoSolicitud(solicitudId, nuevoEstado, estadoDisplay) {
+    const tarjeta = document.querySelector(`.solicitud-card[data-id="${solicitudId}"]`);
+    if (!tarjeta) return;
+
+    // Actualizar badge
+    const badge = tarjeta.querySelector('.badge');
+    if (badge) {
+        badge.className = `badge ${getEstadoBadgeClass(nuevoEstado)}`;
+        badge.textContent = estadoDisplay;
+    }
+
+    // Actualizar o eliminar botones
+    const botonesDiv = tarjeta.querySelector('.mt-2');
+    if (botonesDiv) {
+        if (nuevoEstado === 'pendiente') {
+            botonesDiv.innerHTML = `
+                <button class="btn btn-success btn-sm" onclick="aceptarSolicitud(${solicitudId})">Aceptar</button>
+                <button class="btn btn-danger btn-sm" onclick="rechazarSolicitud(${solicitudId})">Rechazar</button>
+            `;
+        } else if (nuevoEstado === 'aceptada') {
+            botonesDiv.innerHTML = `
+                <button class="btn btn-info btn-sm" onclick="finalizarEncargo(${solicitudId})">🎉 Finalizar encargo</button>
+            `;
+        } else {
+            botonesDiv.remove();
+        }
+    }
 }
 
 // INICIALIZAR EVENTOS

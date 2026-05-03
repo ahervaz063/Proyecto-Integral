@@ -553,6 +553,18 @@ class SolicitudCreateView(ClientRequiredMixin, View):
                 'error': 'Esta comisión ya no tiene slots disponibles.'
             }, status=400)
 
+        solicitud_existente = SolicitudEncargo.objects.filter(
+            cliente=request.user,
+            comision=comision,
+            estado__in=['pendiente', 'aceptada']  # Estados que impiden nueva solicitud
+        ).exists()
+
+        if solicitud_existente:
+            return JsonResponse({
+                'success': False,
+                'error': 'Ya tienes una solicitud pendiente o aceptada para esta comisión. No puedes solicitar otra.'
+            }, status=400)
+
         # Crear la solicitud
         solicitud = SolicitudEncargo.objects.create(
             cliente=request.user,
@@ -683,6 +695,57 @@ class ApiSolicitudesView(ArtistRequiredMixin, View):
             })
         return JsonResponse({'solicitudes': data})
 
+
+class CancelarSolicitudClienteView(ClientRequiredMixin, View):
+    def post(self, request, solicitud_id):
+        solicitud = get_object_or_404(SolicitudEncargo, id=solicitud_id, cliente=request.user)
+
+        if solicitud.cancelar():
+            return JsonResponse({
+                'success': True,
+                'message': 'Solicitud cancelada correctamente.'
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': 'Solo puedes cancelar solicitudes pendientes.'
+            }, status=400)
+
+
+class AceptarSolicitudView(ArtistRequiredMixin, View):
+    def post(self, request, solicitud_id):
+        solicitud = get_object_or_404(SolicitudEncargo, id=solicitud_id)
+        if solicitud.comision.artista != request.user and not request.user.is_staff:
+            return JsonResponse({'success': False, 'error': 'No tienes permiso.'}, status=403)
+
+        if solicitud.aceptar():
+            return JsonResponse(
+                {'success': True, 'message': f'Solicitud de {solicitud.cliente.username} aceptada. Slot ocupado.'})
+        else:
+            return JsonResponse({'success': False, 'error': 'No hay slots disponibles.'}, status=400)
+
+
+class RechazarSolicitudView(ArtistRequiredMixin, View):
+    def post(self, request, solicitud_id):
+        solicitud = get_object_or_404(SolicitudEncargo, id=solicitud_id)
+        if solicitud.comision.artista != request.user and not request.user.is_staff:
+            return JsonResponse({'success': False, 'error': 'No tienes permiso.'}, status=403)
+
+        solicitud.rechazar()
+        return JsonResponse({'success': True, 'message': f'Solicitud de {solicitud.cliente.username} rechazada.'})
+
+
+class FinalizarEncargoView(ArtistRequiredMixin, View):
+    def post(self, request, solicitud_id):
+        solicitud = get_object_or_404(SolicitudEncargo, id=solicitud_id)
+        if solicitud.comision.artista != request.user and not request.user.is_staff:
+            return JsonResponse({'success': False, 'error': 'No tienes permiso.'}, status=403)
+
+        if solicitud.finalizar():
+            return JsonResponse({'success': True, 'message': 'Encargo finalizado. Espera la reseña del cliente.'})
+        else:
+            return JsonResponse({'success': False, 'error': 'Solo puedes finalizar encargos aceptados.'}, status=400)
+
 #RESEÑAS
 class ResenaCreateView(LoginRequiredMixin, CreateView):
     model = Resena
@@ -755,19 +818,16 @@ class BuscarComisionesView(ListView):
                 Q(artista__username__icontains=q)
             )
 
-        # Filtro por categoría (usando el campo usos_permitidos como categoría)
         categoria = self.request.GET.get('categoria', '')
         if categoria:
             queryset = queryset.filter(categorias__icontains=categoria)
 
-        # Filtro por precio
         precio_order = self.request.GET.get('precio', '')
         if precio_order == 'asc':
             queryset = queryset.order_by('precio')
         elif precio_order == 'desc':
             queryset = queryset.order_by('-precio')
 
-        # Filtro por valoraciones (media de reseñas del artista)
         valoracion = self.request.GET.get('valoracion', '')
         if valoracion:
             queryset = queryset.annotate(
@@ -790,13 +850,34 @@ class BuscarComisionesView(ListView):
         else:
             context['user_id'] = 0
 
+        # AÑADIR COMISIONES YA SOLICITADAS POR EL CLIENTE
+        if self.request.user.is_authenticated and self.request.user.es_cliente():
+            solicitadas = SolicitudEncargo.objects.filter(
+                cliente=self.request.user,
+                estado__in=['pendiente', 'aceptada']
+            ).values_list('comision_id', flat=True)
+            context['comisiones_solicitadas_ids'] = list(solicitadas)
+        else:
+            context['comisiones_solicitadas_ids'] = []
+
         return context
 
 #MODAL DETALLE COMISIÓN
 def comision_detalle_modal(request, comision_id):
     comision = get_object_or_404(Comision, id=comision_id, activa=True)
     user_id = request.user.id if request.user.is_authenticated else 0
+
+    # Verificar si el cliente ya tiene una solicitud activa
+    solicitud_activa = False
+    if request.user.is_authenticated and request.user.es_cliente():
+        solicitud_activa = SolicitudEncargo.objects.filter(
+            cliente=request.user,
+            comision=comision,
+            estado__in=['pendiente', 'aceptada']
+        ).exists()
+
     return render(request, 'core/comisiones/detalle_modal.html', {
         'comision': comision,
-        'user_id': user_id
+        'user_id': user_id,
+        'solicitud_activa': solicitud_activa
     })
