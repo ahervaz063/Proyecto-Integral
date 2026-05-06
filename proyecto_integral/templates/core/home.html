@@ -1,15 +1,17 @@
 {% extends 'core/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}Medici - Encuentra artistas para tus proyectos{% endblock %}
 
 {% block content %}
 
-<div class="hero-section" style="height: 50vh;">
-    <div class="text-center text-white">
-        <h1 class="display-3 fw-bold">Conecta con artistas únicos</h1>
-        <p class="lead">Encuentra al creador perfecto para tu proyecto, igual que los Médici en el Renacimiento</p>
-        <a href="{% url 'registro' %}" class="btn btn-primary btn-lg">Comenzar ahora</a>
+<div class="hero-section">
+    <img src="{% static 'images/hero-image.jpg' %}" alt="Hero background">
+    <div class="hero-overlay">
+        <div class="hero-content">
+            <h1 class="display-3 fw-bold">Conecta con artistas únicos</h1>
+        </div>
     </div>
 </div>
 
@@ -17,101 +19,95 @@
 
 <!-- CARRUSEL DE CATEGORÍAS -->
 <h2 class="text-center mb-4">Explora por categorías</h2>
-<div id="categoriasCarousel" class="carousel slide" data-bs-ride="carousel">
+<div id="categoriasCarousel" class="carousel slide" data-bs-wrap="false">
     <div class="carousel-inner">
-        <div class="carousel-item active">
-            <div class="row">
-                <!-- Tarjeta 1: Ilustración -->
-                <div class="col-md-3">
-                    <div class="category-card position-relative overflow-hidden rounded-3">
-                        <img src="{% static 'images/ilustracion.jpg' %}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
-                        <div class="category-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
-                            <h3 class="text-white d-none">Ilustración</h3>
+        {% for grupo_categorias in categorias|batch:4 %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <div class="row">
+                    {% for value, label in grupo_categorias %}
+                        <div class="col-md-3">
+                            <div class="category-card position-relative overflow-hidden rounded-3" onclick="window.location.href='{% url 'buscar_comisiones' %}?categoria={{ value }}'">
+                                <img src="{% static 'images/'|add:value|add:'.jpg' %}" class="img-fluid w-100" style="height: 200px; object-fit: cover;" onerror="this.src='{% static 'images/default-category.jpg' %}'">
+                                <div class="category-overlay">
+                                    <h3>{{ label }}</h3>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                <!-- Tarjeta 2: Diseño -->
-                <div class="col-md-3">
-                    <div class="category-card position-relative overflow-hidden rounded-3">
-                        <img src="{% static 'images/diseno.jpg' %}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
-                        <div class="category-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
-                            <h3 class="text-white d-none">Diseño</h3>
-                        </div>
-                    </div>
-                </div>
-                <!-- Tarjeta 3: Pintura -->
-                <div class="col-md-3">
-                    <div class="category-card position-relative overflow-hidden rounded-3">
-                        <img src="{% static 'images/pintura.jpg' %}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
-                        <div class="category-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
-                            <h3 class="text-white d-none">Pintura</h3>
-                        </div>
-                    </div>
-                </div>
-                <!-- Tarjeta 4: Pixel Art -->
-                <div class="col-md-3">
-                    <div class="category-card position-relative overflow-hidden rounded-3">
-                        <img src="{% static 'images/pixelart.jpg' %}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
-                        <div class="category-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
-                            <h3 class="text-white d-none">Pixel Art</h3>
-                        </div>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
-        </div>
+        {% endfor %}
     </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#categoriasCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#categoriasCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+    </button>
 </div>
-    <!-- TOP 5 PERFILES -->
-    <h2 class="text-center my-5">Artistas más valorados</h2>
-    <div class="row">
-        {% for artista in top_artistas %}
+
+<!-- TOP 5 PERFILES -->
+<h2 class="text-center my-5">Artistas más valorados</h2>
+<div class="row">
+    {% for artista in top_artistas %}
         <div class="col-md-2 col-6 mb-4">
-            <div class="artist-card position-relative overflow-hidden rounded-circle">
-                <img src="{{ artista.foto.url|default:'/static/images/default-artist.jpg' }}" class="img-fluid w-100" style="aspect-ratio: 1; object-fit: cover;">
-                <div class="artist-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
-                    <span class="text-white fw-bold d-none">{{ artista.nombre }}</span>
+            <div class="artist-card position-relative overflow-hidden rounded-circle" onclick="window.location.href='{% url 'perfil_artista' artista.id %}'">
+                <img src="{{ artista.perfil.foto.url|default:'/static/images/default-artist.jpg' }}" class="img-fluid w-100">
+                <div class="artist-overlay">
+                    <span>{{ artista.username }}</span>
                 </div>
             </div>
-            <p class="text-center mt-2 fw-bold">{{ artista.nombre }}</p>
+            <p class="text-center mt-2 fw-bold">{{ artista.username }}</p>
         </div>
-        {% empty %}
+    {% empty %}
         <p class="text-center">Próximamente artistas destacados</p>
-        {% endfor %}
-    </div>
-
-    <!-- TOP 5 COMISIONES MÁS PEDIDAS -->
-    <h2 class="text-center my-5">Comisiones más populares</h2>
-    <div class="row">
-        {% for comision in top_comisiones %}
-        <div class="col-md-2 col-6 mb-4">
-            <div class="comision-card position-relative overflow-hidden rounded-3">
-                <img src="{{ comision.imagen.url|default:'/static/images/default-commission.jpg' }}" class="img-fluid w-100" style="height: 150px; object-fit: cover;">
-                <div class="comision-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
-                    <span class="text-white fw-bold d-none">{{ comision.titulo }}</span>
-                </div>
-            </div>
-            <p class="text-center mt-2">{{ comision.titulo }}</p>
-{% if user.is_authenticated and user.es_cliente %}
-        <form method="POST" action="{% url 'guardar_comision' comision.id %}" style="display: inline;">
-            {% csrf_token %}
-            {% if comision.id in comisiones_guardadas_ids %}
-                <button type="submit" class="btn btn-sm btn-danger mt-2">
-                    ❤️ Guardado
-                </button>
-            {% else %}
-                <button type="submit" class="btn btn-sm btn-outline-danger mt-2">
-                    🤍 Guardar
-                </button>
-            {% endif %}
-        </form>
-        {% endif %}
-        </div>
-        {% empty %}
-        <p class="text-center">Próximamente comisiones destacadas</p>
-        {% endfor %}
-    </div>
+    {% endfor %}
 </div>
 
+<!-- TOP 5 COMISIONES MÁS PEDIDAS -->
+<h2 class="text-center my-5">Comisiones más populares</h2>
+<div class="row">
+    {% for comision in top_comisiones %}
+        <div class="col-md-2 col-6 mb-4">
+            <div class="comision-card position-relative overflow-hidden rounded-3" onclick="abrirModalComision({{ comision.id }})">
+                <img src="{{ comision.imagen.url|default:'/static/images/default-commission.jpg' }}" class="img-fluid w-100">
+                <div class="comision-overlay">
+                    <span>{{ comision.nombre }}</span>
+                </div>
+            </div>
+            <div class="text-center mt-2">
+                <strong>{{ comision.nombre }}</strong>
+                <p class="small text-muted">{{ comision.artista.username }}</p>
+                <p class="fw-bold text-success">{{ comision.precio }}€</p>
+                <!-- Botón guardar comisión (solo cliente logueado) -->
+                {% if user.is_authenticated and user.es_cliente %}
+                    <form method="POST" action="{% url 'guardar_comision' comision.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        {% if comision.id in comisiones_guardadas_ids %}
+                            <button type="submit" class="btn btn-sm btn-danger">❤️ Guardado</button>
+                        {% else %}
+                            <button type="submit" class="btn btn-sm btn-outline-danger">🤍 Guardar</button>
+                        {% endif %}
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        <p class="text-center">Próximamente comisiones destacadas</p>
+    {% endfor %}
+</div>
+
+</div>
+
+<!-- Modal de detalle de comisión (mismo que en buscar_comisiones.html) -->
+<div id="modal-detalle-comision" class="modal" style="display: none;">
+    <div class="modal-contenido">
+        <span class="cerrar-modal" onclick="cerrarModalDetalleComision()">&times;</span>
+        <div id="modal-body">
+            <p>Cargando...</p>
+        </div>
+    </div>
+</div>
 
 <style>
     .transition {
@@ -126,6 +122,56 @@
     .category-card, .artist-card, .comision-card {
         cursor: pointer;
     }
+    .category-card img, .artist-card img, .comision-card img {
+        transition: transform 0.3s ease;
+    }
+    .category-card:hover img, .artist-card:hover img, .comision-card:hover img {
+        transform: scale(1.05);
+    }
 </style>
+
+<script>
+// Función para abrir modal de detalle de comisión (desde home)
+function abrirModalComision(comisionId) {
+    var modal = document.getElementById('modal-detalle-comision');
+    var modalBody = document.getElementById('modal-body');
+
+    modal.style.display = 'flex';
+    modalBody.innerHTML = '<p>Cargando...</p>';
+
+    fetch(`/comision/${comisionId}/detalle-modal/`)
+        .then(response => response.text())
+        .then(html => {
+            modalBody.innerHTML = html;
+            // Ejecutar scripts dentro del modal
+            const scripts = modalBody.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                if (oldScript.src) {
+                    newScript.src = oldScript.src;
+                } else {
+                    newScript.textContent = oldScript.textContent;
+                }
+                document.body.appendChild(newScript);
+                document.body.removeChild(newScript);
+            });
+        })
+        .catch(error => {
+            modalBody.innerHTML = '<p>Error al cargar la información.</p>';
+        });
+}
+
+function cerrarModalDetalleComision() {
+    document.getElementById('modal-detalle-comision').style.display = 'none';
+}
+
+// Cerrar modal al hacer clic fuera
+window.onclick = function(event) {
+    const modal = document.getElementById('modal-detalle-comision');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+}
+</script>
 
 {% endblock %}

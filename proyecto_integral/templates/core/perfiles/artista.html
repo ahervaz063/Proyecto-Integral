@@ -387,13 +387,13 @@
                 {% for reseña in reseñas %}
                     <div class="reseña-card">
                         <div class="reseña-header">
-                            {% if reseña.cliente.perfil.foto %}
-                                <img src="{{ reseña.cliente.perfil.foto.url }}" alt="{{ reseña.cliente.username }}" class="reseña-foto">
+                            {% if reseña.solicitud.cliente.perfil.foto %}
+                                <img src="{{ reseña.solicitud.cliente.perfil.foto.url }}" class="reseña-foto">
                             {% else %}
-                                <img src="{% static 'recursos/mononoke.jpg' %}" alt="usuario" class="reseña-foto">
+                                <img src="{% static 'recursos/mononoke.jpg' %}" class="reseña-foto">
                             {% endif %}
                             <div>
-                                <div class="reseña-user">@{{ reseña.cliente.username }}</div>
+                                <div class="reseña-user">@{{ reseña.solicitud.cliente.username }}</div>
                                 <div class="reseña-puntuacion">
                                     {% for i in "12345"|make_list %}
                                         {% if forloop.counter <= reseña.puntuacion %}★{% else %}☆{% endif %}
@@ -404,18 +404,6 @@
                         </div>
                         <div class="reseña-fecha">{{ reseña.fecha|date:"d/m/Y" }}</div>
                         <div class="reseña-comentario">{{ reseña.comentario }}</div>
-                    </div>
-                {% empty %}
-                    <div class="reseña-card">
-                        <div class="reseña-header">
-                            <img src="{% static 'recursos/mononoke.jpg' %}" alt="usuario" class="reseña-foto">
-                            <div>
-                                <div class="reseña-user">Sin reseñas aún</div>
-                                <div class="reseña-puntuacion">★★★★★ 0 / 5</div>
-                            </div>
-                        </div>
-                        <div class="reseña-fecha">--/--/----</div>
-                        <div class="reseña-comentario">Cuando completes encargos, los clientes podrán valorarte.</div>
                     </div>
                 {% endfor %}
             </div>

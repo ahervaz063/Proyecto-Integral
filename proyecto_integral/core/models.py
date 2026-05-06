@@ -146,6 +146,7 @@ class Comision(models.Model):
         ('libro', 'Libro'),
         ('branding', 'Branding'),
         ('comic_manga', 'Cómic / Manga'),
+        ('diseno_web', 'Diseño Web'),
     )
 
     artista = models.ForeignKey(
@@ -300,6 +301,16 @@ class SolicitudEncargo(models.Model):
     def __str__(self):
         return f"Solicitud de {self.cliente.username} para {self.comision.nombre} - {self.get_estado_display()}"
 
+    @property
+    def reseña_cliente(self):
+        """Devuelve True si el cliente ya ha escrito una reseña para esta solicitud"""
+        return hasattr(self, 'reseña') and self.reseña.cliente == self.cliente
+
+    @property
+    def reseña_artista(self):
+        """Devuelve True si el artista ya ha escrito una reseña para esta solicitud"""
+        return hasattr(self, 'reseña') and self.reseña.artista == self.comision.artista
+
     def aceptar(self):
         """Acepta la solicitud y ocupa un slot de la comisión."""
         if self.estado == 'pendiente' and self.comision.slots_disponibles > 0:
@@ -340,13 +351,23 @@ class SolicitudEncargo(models.Model):
 
 # RESEÑA (cliente -> artista después de finalizar)
 class Resena(models.Model):
-    cliente = models.ForeignKey(
-        Usuario,
-        on_delete=models.CASCADE,
-        related_name='reseñas_escritas',
-        limit_choices_to={'tipo_usuario': 'cliente'},
-        verbose_name="Cliente"
+    TIPO_RESEÑA = (
+        ('cliente_a_artista', 'Cliente → Artista'),
+        ('artista_a_cliente', 'Artista → Cliente'),
     )
+
+    solicitud = models.ForeignKey(
+        SolicitudEncargo,
+        on_delete=models.CASCADE,
+        related_name='reseñas'
+    )
+    tipo = models.CharField(max_length=20, choices=TIPO_RESEÑA)
+    puntuacion = models.PositiveSmallIntegerField(
+        choices=[(i, f"{i} estrellas") for i in range(1, 6)]
+    )
+    comentario = models.TextField()
+    fecha = models.DateTimeField(auto_now_add=True)
+
     artista = models.ForeignKey(
         Usuario,
         on_delete=models.CASCADE,
@@ -354,27 +375,15 @@ class Resena(models.Model):
         limit_choices_to={'tipo_usuario': 'artista'},
         verbose_name="Artista"
     )
-    solicitud = models.OneToOneField(
-        SolicitudEncargo,
-        on_delete=models.CASCADE,
-        related_name='reseña',
-        verbose_name="Solicitud asociada"
-    )
-    puntuacion = models.PositiveSmallIntegerField(
-        choices=[(i, f"{i} estrellas") for i in range(1, 6)],
-        verbose_name="Puntuación"
-    )
-    comentario = models.TextField(verbose_name="Comentario")
-    fecha = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de reseña")
 
     class Meta:
         verbose_name = "Reseña"
         verbose_name_plural = "Reseñas"
         ordering = ['-fecha']
-        unique_together = ['cliente', 'artista', 'solicitud']  # Evitar reseñas duplicadas
+        unique_together = ['solicitud', 'tipo']  # Una reseña por tipo por solicitud
 
     def __str__(self):
-        return f"Reseña de {self.cliente.username} para {self.artista.username}: {self.puntuacion}/5"
+        return f"Reseña de {self.get_tipo_display()} - {self.puntuacion}/5"
 
 
 

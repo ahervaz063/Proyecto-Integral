@@ -144,6 +144,7 @@
                     <a href="?categoria=libro{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Libro</a>
                     <a href="?categoria=branding{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Branding</a>
                     <a href="?categoria=comic_manga{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Cómic / Manga</a>
+                    <a href="?categoria=diseno_web{% if precio_seleccionado %}&precio={{ precio_seleccionado }}{% endif %}{% if valoracion_seleccionada %}&valoracion={{ valoracion_seleccionada }}{% endif %}">Diseño Web</a>
                 </div>
             </div>
 
@@ -188,21 +189,23 @@
                         {% endif %}
                         <div class="comision-info">
                             <div class="comision-titulo">{{ comision.nombre }}</div>
-                            <div class="comision-artista">🎨 @{{ comision.artista.username }}</div>
+                            <div class="comision-artista">@{{ comision.artista.username }}</div>
                             <div class="comision-precio">{{ comision.precio }}€</div>
 
                             {% if user.is_authenticated and user.es_cliente %}
+                                <!-- Botón de guardar (siempre visible) -->
+                                <form method="POST" action="{% url 'guardar_comision' comision.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    {% if comision.id in comisiones_guardadas_ids %}
+                                        <button type="submit" class="btn btn-sm btn-danger mt-2">❤️ Guardado</button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger mt-2">🤍 Guardar</button>
+                                    {% endif %}
+                                </form>
+
+                                <!-- Mensaje informativo si ya solicitó esta comisión -->
                                 {% if comision.id in comisiones_solicitadas_ids %}
-                                    <span class="badge bg-secondary mt-2" style="display: inline-block; width: 100%;">⏳ Ya solicitado</span>
-                                {% else %}
-                                    <form method="POST" action="{% url 'guardar_comision' comision.id %}" style="display: inline;">
-                                        {% csrf_token %}
-                                        {% if comision.id in comisiones_guardadas_ids %}
-                                            <button type="submit" class="btn btn-sm btn-danger mt-2">❤️ Guardado</button>
-                                        {% else %}
-                                            <button type="submit" class="btn btn-sm btn-outline-danger mt-2">🤍 Guardar</button>
-                                        {% endif %}
-                                    </form>
+                                    <span class="badge bg-info mt-2" style="display: inline-block; width: 100%;">Ya solicitaste esta comisión</span>
                                 {% endif %}
                             {% endif %}
                         </div>

@@ -288,8 +288,8 @@
                         <div class="comision-info">
                             <div class="comision-titulo">{{ solicitud.comision.nombre }}</div>
                             <div class="badges">
-                                <span class="badge">🎨 {{ solicitud.comision.artista.username }}</span>
-                                <span class="badge">💰 {{ solicitud.comision.precio }}€</span>
+                                <span class="badge">{{ solicitud.comision.artista.username }}</span>
+                                <span class="badge">{{ solicitud.comision.precio }}€</span>
                             </div>
                             <div class="comision-desc">{{ solicitud.descripcion_idea|truncatewords:15 }}</div>
                             {% if solicitud.estado == 'pendiente' %}
@@ -297,10 +297,10 @@
                             {% endif %}
                         </div>
                         <div class="estado estado-{{ solicitud.estado }}">
-                            {% if solicitud.estado == 'pendiente' %}⏳ Pendiente
-                            {% elif solicitud.estado == 'aceptada' %}✅ Aceptada
-                            {% elif solicitud.estado == 'rechazada' %}❌ Rechazada
-                            {% elif solicitud.estado == 'finalizada' %}🎉 Finalizada
+                            {% if solicitud.estado == 'pendiente' %}Pendiente
+                            {% elif solicitud.estado == 'aceptada' %}Aceptada
+                            {% elif solicitud.estado == 'rechazada' %}Rechazada
+                            {% elif solicitud.estado == 'finalizada' %}Finalizada
                             {% endif %}
                         </div>
                     </div>
@@ -338,41 +338,72 @@
             </div>
 
             <!-- Panel Reseñas -->
-            <div id="reseñas" class="panel oculto">
-                <div class="media-resumen">
-                    <div class="media-numero">{{ media_puntuacion|floatformat:1|default:"0" }} / 5</div>
-                    <div>{{ total_reseñas|default:"0" }} reseñas escritas</div>
-                </div>
-                {% for reseña in reseñas %}
-                    <div class="reseña-card">
-                        <div class="reseña-header">
-                            {% if reseña.artista.perfil.foto %}
-                                <img src="{{ reseña.artista.perfil.foto.url }}" alt="{{ reseña.artista.username }}" class="reseña-foto">
-                            {% else %}
-                                <img src="{% static 'recursos/mononoke.jpg' %}" alt="artista" class="reseña-foto">
-                            {% endif %}
-                            <div>
-                                <div class="reseña-user">@{{ reseña.artista.username }}</div>
-                                <div class="reseña-puntuacion">
-                                    {% for i in "12345"|make_list %}
-                                        {% if forloop.counter <= reseña.puntuacion %}★{% else %}☆{% endif %}
-                                    {% endfor %}
-                                    {{ reseña.puntuacion }} / 5
+                <div id="reseñas" class="panel oculto">
+                    <div class="media-resumen">
+                        <div class="media-numero">{{ media_puntuacion|floatformat:1|default:"0" }} / 5</div>
+                        <div>{{ total_reseñas|default:"0" }} reseñas</div>
+                    </div>
+
+                    <!-- Reseñas escritas por el cliente (a artistas) -->
+                    {% if reseñas_escritas %}
+                        <h4>Reseñas que escribiste</h4>
+                        {% for reseña in reseñas_escritas %}
+                            <div class="reseña-card">
+                                <div class="reseña-header">
+                                    {% if reseña.solicitud.comision.artista.perfil.foto %}
+                                        <img src="{{ reseña.solicitud.comision.artista.perfil.foto.url }}" class="reseña-foto">
+                                    {% else %}
+                                        <img src="{% static 'recursos/mononoke.jpg' %}" class="reseña-foto">
+                                    {% endif %}
+                                    <div>
+                                        <div class="reseña-user">@{{ reseña.solicitud.comision.artista.username }}</div>
+                                        <div class="reseña-puntuacion">
+                                            {% for i in "12345"|make_list %}
+                                                {% if forloop.counter <= reseña.puntuacion %}★{% else %}☆{% endif %}
+                                            {% endfor %}
+                                            {{ reseña.puntuacion }} / 5
+                                        </div>
+                                    </div>
                                 </div>
+                                <div class="reseña-fecha">{{ reseña.fecha|date:"d/m/Y" }}</div>
+                                <div class="reseña-comentario">{{ reseña.comentario }}</div>
                             </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- Reseñas recibidas por el cliente (de artistas) -->
+                    {% if reseñas_recibidas %}
+                        <h4>Reseñas que recibiste</h4>
+                        {% for reseña in reseñas_recibidas %}
+                            <div class="reseña-card">
+                                <div class="reseña-header">
+                                    {% if reseña.solicitud.comision.artista.perfil.foto %}
+                                        <img src="{{ reseña.solicitud.comision.artista.perfil.foto.url }}" class="reseña-foto">
+                                    {% else %}
+                                        <img src="{% static 'recursos/mononoke.jpg' %}" class="reseña-foto">
+                                    {% endif %}
+                                    <div>
+                                        <div class="reseña-user">@{{ reseña.solicitud.comision.artista.username }}</div>
+                                        <div class="reseña-puntuacion">
+                                            {% for i in "12345"|make_list %}
+                                                {% if forloop.counter <= reseña.puntuacion %}★{% else %}☆{% endif %}
+                                            {% endfor %}
+                                            {{ reseña.puntuacion }} / 5
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="reseña-fecha">{{ reseña.fecha|date:"d/m/Y" }}</div>
+                                <div class="reseña-comentario">{{ reseña.comentario }}</div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if not reseñas_escritas and not reseñas_recibidas %}
+                        <div class="empty-state">
+                            <p>No hay reseñas aún.</p>
                         </div>
-                        <div class="reseña-fecha">{{ reseña.fecha|date:"d/m/Y" }}</div>
-                        <div class="reseña-comentario">{{ reseña.comentario }}</div>
-                    </div>
-                {% empty %}
-                    <div class="empty-state">
-                        <p>No has escrito reseñas aún.</p>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</div>
+                    {% endif %}
+                </div>
 
 <!-- Modal editar perfil (mismo que en artista) -->
 <div id="modal-editar-perfil" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">

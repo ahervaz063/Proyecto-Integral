@@ -32,16 +32,18 @@
                         <div class="mt-3">
                             <a href="{% url 'cancelar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Cancelar esta solicitud?')">Cancelar solicitud</a>
                         </div>
-                    {% elif solicitud.estado == 'finalizada' and not solicitud.reseña %}
+                    {% elif solicitud.estado == 'finalizada' and not solicitud.reseña_cliente %}
                         <div class="mt-3">
-                            <a href="{% url 'resena_create' solicitud.id %}" class="btn btn-primary btn-sm">Escribir reseña</a>
+                            <button class="btn btn-primary btn-sm" onclick="abrirModalResena({{ solicitud.id }}, 'artista')">
+                                ⭐ Valorar al artista
+                            </button>
                         </div>
-                    {% elif solicitud.estado == 'finalizada' and solicitud.reseña %}
+                    {% elif solicitud.estado == 'finalizada' and solicitud.reseña_cliente %}
                         <div class="mt-3">
-                            <span class="badge bg-success">✅ Ya reseñado</span>
+                            <span class="badge bg-success">Ya valoraste a este artista</span>
                         </div>
                     {% endif %}
-                </div>
+                                    </div>
             </div>
         {% endfor %}
         
@@ -68,4 +70,112 @@
         <a href="{% url 'home' %}" class="btn btn-secondary">Explorar comisiones</a>
     </div>
 </div>
+
+<!-- Modal para reseña -->
+<div id="modal-resena" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1001; align-items: center; justify-content: center;">
+    <div style="background-color: white; width: 500px; border-radius: 20px; padding: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0;">Dejar reseña</h2>
+            <button onclick="cerrarModalResena()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖️</button>
+        </div>
+        <form id="form-resena">
+            {% csrf_token %}
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Puntuación</label>
+                <select name="puntuacion" id="puntuacion" class="form-control" required>
+                    <option value="">Selecciona puntuación</option>
+                    <option value="1">⭐ 1 estrella</option>
+                    <option value="2">⭐⭐ 2 estrellas</option>
+                    <option value="3">⭐⭐⭐ 3 estrellas</option>
+                    <option value="4">⭐⭐⭐⭐ 4 estrellas</option>
+                    <option value="5">⭐⭐⭐⭐⭐ 5 estrellas</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; font-weight: bold; margin-bottom: 0.5rem;">Comentario</label>
+                <textarea name="comentario" id="comentario" rows="4" class="form-control" placeholder="Cuéntanos tu experiencia..." required></textarea>
+            </div>
+            <button type="submit" id="btn-enviar-resena" style="width: 100%; padding: 0.8rem; background-color: #333; color: white; border: none; border-radius: 30px; cursor: pointer;">Enviar reseña</button>
+        </form>
+    </div>
+</div>
+
+<script>
+let solicitudResenaId = null;
+let tipoResena = null; // 'artista' o 'cliente'
+const csrfToken = '{{ csrf_token }}';
+
+function mostrarMensaje(mensaje, tipo) {
+    const div = document.createElement('div');
+    div.textContent = mensaje;
+    div.style.cssText = `position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; z-index: 10000; color: white; background-color: ${tipo === 'success' ? '#28a745' : '#dc3545'};`;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 3000);
+}
+
+function abrirModalResena(solicitudId, tipo) {
+    solicitudResenaId = solicitudId;
+    tipoResena = tipo;
+    document.getElementById('modal-resena').style.display = 'flex';
+}
+
+function cerrarModalResena() {
+    document.getElementById('modal-resena').style.display = 'none';
+    document.getElementById('form-resena').reset();
+}
+
+
+function actualizarBotonResena(solicitudId) {
+    // Buscar todas las tarjetas
+    const cards = document.querySelectorAll('.card');
+    for (const card of cards) {
+        // Buscar si la tarjeta contiene el ID en el onclick
+        if (card.innerHTML.includes(`abrirModalResena(${solicitudId}`)) {
+            const botonContainer = card.querySelector('.mt-3');
+            if (botonContainer) {
+                botonContainer.innerHTML = '<span class="badge bg-success">✅ Ya reseñado</span>';
+            }
+            break;
+        }
+    }
+}
+
+document.getElementById('form-resena').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const btn = document.getElementById('btn-enviar-resena');
+
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    fetch(`/resena/crear/${solicitudResenaId}/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        btn.disabled = false;
+        btn.textContent = 'Enviar reseña';
+
+        if (data.success) {
+            mostrarMensaje(data.message, 'success');
+            cerrarModalResena();
+            actualizarBotonResena(solicitudResenaId);
+        } else {
+            mostrarMensaje(data.error || 'Error al enviar reseña', 'error');
+        }
+    })
+    .catch(error => {
+        btn.disabled = false;
+        btn.textContent = 'Enviar reseña';
+        mostrarMensaje('Error de conexión', 'error');
+    });
+});
+</script>
+
 {% endblock %}
