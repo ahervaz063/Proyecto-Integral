@@ -199,6 +199,94 @@ class EditarPerfilView(TemplateView):
             return reverse_lazy('perfil_cliente', kwargs={'pk': self.request.user.pk})
 
 
+class EditarPerfilAJAXView(LoginRequiredMixin, View):
+    """Editar perfil con AJAX"""
+
+    def post(self, request):
+        user = request.user
+
+        # Asegurar que el usuario tiene un perfil
+        perfil, created = Perfil.objects.get_or_create(usuario=user)
+
+        # Guardar el username antiguo para verificar si cambió
+        old_username = user.username
+        new_username = request.POST.get('username', '')
+
+        # Verificar si el nuevo username ya existe (y no es el mismo usuario)
+        if new_username and new_username != old_username:
+            from core.models import Usuario
+            if Usuario.objects.filter(username=new_username).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'El nombre de usuario ya está en uso. Elige otro.'
+                }, status=400)
+
+        # Actualizar campos del usuario
+        user.first_name = request.POST.get('first_name', '')
+        user.last_name = request.POST.get('last_name', '')
+        user.username = new_username
+        user.email = request.POST.get('email', '')
+        user.save()
+
+        # Actualizar campos del perfil
+        perfil.descripcion = request.POST.get('descripcion', '')
+
+        # Redes sociales (JSON)
+        redes_sociales = {}
+        if request.POST.get('instagram'):
+            redes_sociales['instagram'] = request.POST.get('instagram')
+        if request.POST.get('twitter'):
+            redes_sociales['twitter'] = request.POST.get('twitter')
+        if request.POST.get('behance'):
+            redes_sociales['behance'] = request.POST.get('behance')
+        perfil.redes_sociales = redes_sociales
+
+        # Foto de perfil
+        if 'foto' in request.FILES:
+            perfil.foto = request.FILES['foto']
+
+        # Solo para artistas
+        if user.es_artista():
+            perfil.tarjeta = request.POST.get('tarjeta', '')
+
+        perfil.save()
+
+        # Actualizar contraseña si se proporcionó
+        password = request.POST.get('password', '')
+        if password:
+            user.set_password(password)
+            user.save()
+
+        # Actualizar la sesión para evitar problemas de autenticación
+        from django.contrib.auth import update_session_auth_hash, login
+
+        # Si se cambió la contraseña, actualizar la sesión
+        if password:
+            update_session_auth_hash(request, user)
+
+        # Si se cambió el username, actualizar la sesión
+        if new_username != old_username:
+            # Regenerar la sesión con el nuevo username
+            login(request, user)
+
+        return JsonResponse({
+            'success': True,
+            'message': 'Perfil actualizado correctamente.',
+            'user': {
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'username': user.username,
+                'email': user.email,
+            },
+            'perfil': {
+                'descripcion': perfil.descripcion,
+                'foto_url': perfil.foto.url if perfil.foto else None,
+                'redes_sociales': perfil.redes_sociales,
+            }
+        })
+
+
+
 # COMISIONES
 class ComisionListView(ListView):
     model = Comision
@@ -736,6 +824,7 @@ class ApiSolicitudesView(ArtistRequiredMixin, View):
                 'estado': s.estado,
                 'estado_display': s.get_estado_display(),
                 'fecha': s.fecha_solicitud.strftime('%d/%m/%Y %H:%M'),
+                'referencias_url': s.referencias.url if s.referencias else None,
             })
         return JsonResponse({'solicitudes': data})
 

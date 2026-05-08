@@ -2,6 +2,8 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 # USUARIO PERSONALIZADO
@@ -412,3 +414,16 @@ class ComisionGuardada(models.Model):
 
     def __str__(self):
         return f"{self.cliente.username} guardó {self.comision.nombre}"
+
+
+@receiver(post_save, sender=Usuario)
+def crear_perfil_usuario(sender, instance, created, **kwargs):
+    """Crea un perfil automáticamente cuando se crea un nuevo usuario"""
+    if created:
+        Perfil.objects.create(usuario=instance)
+
+@receiver(post_save, sender=Usuario)
+def guardar_perfil_usuario(sender, instance, **kwargs):
+    """Guarda el perfil cuando se guarda el usuario"""
+    if hasattr(instance, 'perfil'):
+        instance.perfil.save()

@@ -16,6 +16,7 @@ urlpatterns = [
     path('artista/<int:pk>/', views.PerfilArtistaView.as_view(), name='perfil_artista'),
     path('cliente/<int:pk>/', views.PerfilClienteView.as_view(), name='perfil_cliente'),
     path('editar-perfil/', views.EditarPerfilView.as_view(), name='editar_perfil'),
+    path('editar-perfil-ajax/', views.EditarPerfilAJAXView.as_view(), name='editar_perfil_ajax'),
 
     # Comisiones
     path('comisiones/<int:pk>/', views.ComisionDetailView.as_view(), name='comision_detail'),

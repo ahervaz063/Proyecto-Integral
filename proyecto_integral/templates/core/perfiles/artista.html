@@ -548,6 +548,15 @@
     </div>
 </div>
 
+<!-- Modal / Popup para ver imagen en grande -->
+<div id="modal-imagen-grande" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center; cursor: pointer;">
+    <div style="position: relative; max-width: 90%; max-height: 90%;">
+        <button onclick="cerrarModalImagen()" style="position: absolute; top: -40px; right: 0; background: none; border: none; color: white; font-size: 2rem; cursor: pointer;">&times;</button>
+        <img id="imagen-grande" src="#" alt="Imagen ampliada" style="max-width: 100%; max-height: 90vh; object-fit: contain; border-radius: 8px;">
+        <p id="imagen-titulo" style="color: white; text-align: center; margin-top: 10px; font-size: 1rem;"></p>
+    </div>
+</div>
+
 <!-- Modal / Popup para editar perfil -->
 <div id="modal-editar-perfil" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
     <div style="background-color: white; width: 50%; max-width: 800px; min-width: 600px; border-radius: 20px; padding: 1.5rem; max-height: 90vh; overflow-y: auto;">
@@ -556,12 +565,14 @@
             <button onclick="cerrarModalEditarPerfil()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✖️</button>
         </div>
         
-        <form method="POST" action="{% url 'editar_perfil' %}" enctype="multipart/form-data">
+        <div id="form-perfil-errors" style="color: red; margin-bottom: 1rem; display: none;"></div>
+
+        <form id="form-editar-perfil-ajax" enctype="multipart/form-data">
             {% csrf_token %}
-            
+
             <div style="display: flex; gap: 2rem; align-items: flex-start;">
-                
-                <!-- Columna izquierda: foto de perfil circular -->
+
+                <!-- Columna izquierda: foto de perfil -->
                 <div style="flex: 0.8; text-align: center;">
                     <label for="foto_perfil" style="cursor: pointer;">
                         <div style="position: relative; width: 100%;">
@@ -576,48 +587,65 @@
                     <input type="file" id="foto_perfil" name="foto" accept="image/*" style="display: none;" onchange="previewFotoPerfil(event)">
                     <p style="font-size: 0.8rem; color: #666; margin-top: 0.5rem;">Haz clic para cambiar tu foto</p>
                 </div>
-                
+
                 <!-- Columna derecha: formulario -->
                 <div style="flex: 1.2;">
                     <h2 style="margin-top: 0; margin-bottom: 1.5rem;">Editar perfil</h2>
-                    
+
                     <div style="margin-bottom: 1rem;">
                         <label for="nombre" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Nombre</label>
                         <input type="text" id="nombre" name="first_name" value="{{ user.first_name }}" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">
                     </div>
-                    
+
                     <div style="margin-bottom: 1rem;">
-                        <label for="username" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Username</label>
+                        <label for="apellidos" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Apellidos</label>
+                        <input type="text" id="apellidos" name="last_name" value="{{ user.last_name }}" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="username" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Usuario</label>
                         <input type="text" id="username" name="username" value="{{ user.username }}" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">
                     </div>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <label for="descripcion" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Descripción</label>
-                        <textarea id="descripcion" name="descripcion" rows="3" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">{{ user.perfil.descripcion }}</textarea>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem;">
-                        <label for="enlaces" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Enlaces (redes sociales)</label>
-                        <input type="text" id="enlaces" name="enlaces" value="{% for red, url in user.perfil.redes_sociales.items %}{{ url }} {% endfor %}" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Instagram, Twitter, Behance...">
-                    </div>
-                    
+
                     <div style="margin-bottom: 1rem;">
                         <label for="email" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Email</label>
                         <input type="email" id="email" name="email" value="{{ user.email }}" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">
                     </div>
-                    
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="descripcion" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Descripción</label>
+                        <textarea id="descripcion" name="descripcion" rows="3" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">{{ user.perfil.descripcion }}</textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="instagram" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Instagram</label>
+                        <input type="text" id="instagram" name="instagram" value="{{ user.perfil.redes_sociales.instagram|default:'' }}" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="@usuario">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="twitter" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Twitter / X</label>
+                        <input type="text" id="twitter" name="twitter" value="{{ user.perfil.redes_sociales.twitter|default:'' }}" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="@usuario">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label for="behance" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Behance</label>
+                        <input type="text" id="behance" name="behance" value="{{ user.perfil.redes_sociales.behance|default:'' }}" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="URL de Behance">
+                    </div>
+
                     <div style="margin-bottom: 1rem;">
                         <label for="password" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Nueva contraseña (opcional)</label>
                         <input type="password" id="password" name="password" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;" placeholder="Dejar en blanco para no cambiar">
                     </div>
-                    
-                    <div style="margin-bottom: 1.5rem;">
+
+                    {% if user.es_artista %}
+                    <div style="margin-bottom: 1rem;">
                         <label for="tarjeta" style="display: block; font-weight: bold; margin-bottom: 0.3rem;">Tarjeta (para pagos)</label>
                         <input type="text" id="tarjeta" name="tarjeta" value="{{ user.perfil.tarjeta }}" placeholder="**** **** **** 1234" style="width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 8px;">
                     </div>
-                    
+                    {% endif %}
+
                     <div style="text-align: center;">
-                        <button type="submit" style="background-color: #333; color: white; padding: 0.8rem 2rem; border: none; border-radius: 30px; cursor: pointer;">Guardar cambios</button>
+                        <button type="submit" id="btn-guardar-perfil" style="background-color: #333; color: white; padding: 0.8rem 2rem; border: none; border-radius: 30px; cursor: pointer;">Guardar cambios</button>
                     </div>
                 </div>
                 
@@ -805,6 +833,89 @@ function getCookie(name) {
 }
 
 // FUNCIONES PARA EL MODAL DE EDICIÓN DE PERFIL
+
+// Función para enviar el formulario de editar perfil con AJAX
+const formEditarPerfil = document.getElementById('form-editar-perfil-ajax');
+
+if (formEditarPerfil) {
+    formEditarPerfil.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const btn = document.getElementById('btn-guardar-perfil');
+        const errorsDiv = document.getElementById('form-perfil-errors');
+
+        btn.disabled = true;
+        btn.textContent = 'Guardando...';
+        if (errorsDiv) errorsDiv.style.display = 'none';
+
+        fetch('/editar-perfil-ajax/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.textContent = 'Guardar cambios';
+
+            if (data.success) {
+                // Actualizar la información mostrada en el sidebar
+                actualizarPerfilVista(data);
+
+                cerrarModalEditarPerfil();
+                mostrarMensaje(data.message, 'success');
+
+                // Recargar la página después de 1.5 segundos para mostrar cambios
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                if (errorsDiv) {
+                    errorsDiv.style.display = 'block';
+                    errorsDiv.innerHTML = data.error || 'Error al guardar los cambios.';
+                }
+            }
+        })
+        .catch(error => {
+            btn.disabled = false;
+            btn.textContent = 'Guardar cambios';
+            if (errorsDiv) {
+                errorsDiv.style.display = 'block';
+                errorsDiv.innerHTML = 'Error de conexión. Inténtalo de nuevo.';
+            }
+        });
+    });
+}
+
+// Función para actualizar la vista del perfil sin recargar
+function actualizarPerfilVista(data) {
+    // Actualizar nombre y username en el sidebar
+    const nombreElem = document.querySelector('.sidebar h3');
+    const usernameElem = document.querySelector('.sidebar p');
+    const fotoElem = document.querySelector('.sidebar .foto-perfil img');
+
+    if (nombreElem) {
+        nombreElem.textContent = data.user.first_name || data.user.username;
+    }
+    if (usernameElem) {
+        usernameElem.textContent = '@' + data.user.username;
+    }
+    if (fotoElem && data.perfil.foto_url) {
+        fotoElem.src = data.perfil.foto_url;
+    }
+
+    // Actualizar descripción
+    const descripcionElem = document.querySelector('.descripcion p');
+    if (descripcionElem) {
+        descripcionElem.textContent = data.perfil.descripcion || 'Sin descripción aún.';
+    }
+}
+
+
 function abrirModalEditarPerfil() {
     document.getElementById('modal-editar-perfil').style.display = 'flex';
 }
@@ -1213,7 +1324,7 @@ function recargarPortfolio() {
             if (data.imagenes && data.imagenes.length > 0) {
                 galeria.innerHTML = data.imagenes.map(img => `
                     <div class="item-portfolio" data-id="${img.id}">
-                        <img src="${img.imagen_url}" alt="${escapeHtml(img.titulo)}">
+                        <img src="${img.imagen_url}" alt="${escapeHtml(img.titulo)}" style="cursor: pointer;" onclick="abrirModalImagen('${img.imagen_url}', '${escapeHtml(img.titulo)}')">
                         <div class="portfolio-acciones">
                             <span onclick="abrirModalEditarPortfolio(${img.id})">✏️</span>
                             <span onclick="eliminarImagenPortfolio(${img.id}, '${escapeHtml(img.titulo)}')">🗑️</span>
@@ -1341,6 +1452,28 @@ function enviarFormularioPortfolio(event) {
     });
 }
 
+// Funciones para el modal de imagen en grande del portfolio
+function abrirModalImagen(imagenUrl, titulo) {
+    const modal = document.getElementById('modal-imagen-grande');
+    const img = document.getElementById('imagen-grande');
+    const tituloElem = document.getElementById('imagen-titulo');
+
+    img.src = imagenUrl;
+    tituloElem.textContent = titulo || 'Sin título';
+    modal.style.display = 'flex';
+}
+
+function cerrarModalImagen() {
+    const modal = document.getElementById('modal-imagen-grande');
+    modal.style.display = 'none';
+}
+
+// Cerrar modal con la tecla ESC
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        cerrarModalImagen();
+    }
+});
 
 
 // POLÍTICAS
@@ -1562,6 +1695,16 @@ function recargarSolicitudes() {
                         <p><strong>Comisión:</strong> ${escapeHtml(s.comision_nombre)}</p>
                         <p><strong>Descripción:</strong> ${escapeHtml(s.descripcion)}</p>
                         <p><small>${escapeHtml(s.fecha)}</small></p>
+
+                         ${s.referencias_url ? `
+                            <div class="mt-2">
+                                <strong>Imagen de referencia:</strong>
+                                <div style="margin-top: 5px;">
+                                    <img src="${s.referencias_url}" alt="Referencia" style="max-width: 150px; max-height: 150px; border-radius: 8px; cursor: pointer;" onclick="abrirModalImagen('${s.referencias_url}', 'Imagen de referencia')">
+                                </div>
+                            </div>
+                        ` : ''}
+
                         ${getBotonesSolicitud(s.id, s.estado)}
                     </div>
                 `).join('');

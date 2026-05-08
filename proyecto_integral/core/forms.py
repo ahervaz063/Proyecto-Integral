@@ -59,7 +59,7 @@ class RegistroForm(UserCreationForm):
     )
     tipo_usuario = forms.ChoiceField(
         choices=Usuario.TIPO_USUARIO,
-        widget=forms.HiddenInput(),  # Oculto, lo controlamos con JavaScript
+        widget=forms.HiddenInput(),  # Oculto, se controla con JavaScript
         initial='cliente'
     )
 
@@ -87,6 +87,7 @@ class SolicitudEncargoForm(forms.ModelForm):
             ),
             'email': forms.EmailInput(attrs={'placeholder': 'tu@email.com'}),
             'instagram': forms.TextInput(attrs={'placeholder': '@usuario'}),
+            'referencias': forms.ClearableFileInput(attrs={'accept': 'image/*'})  # Una sola imagen
         }
 
     def clean_email(self):
