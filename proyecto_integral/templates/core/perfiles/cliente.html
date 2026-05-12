@@ -317,13 +317,13 @@
             {% for reseña in reseñas %}
                 <div class="reseña-card">
                     <div class="reseña-header">
-                        {% if reseña.artista.perfil.foto %}
-                            <img src="{{ reseña.artista.perfil.foto.url }}" alt="{{ reseña.artista.username }}" class="reseña-foto">
+                        {% if reseña.solicitud.comision.artista.perfil.foto %}
+                            <img src="{{ reseña.solicitud.comision.artista.perfil.foto.url }}" alt="{{ reseña.solicitud.comision.artista.username }}" class="reseña-foto">
                         {% else %}
                             <img src="{% static 'recursos/mononoke.jpg' %}" alt="artista" class="reseña-foto">
                         {% endif %}
                         <div>
-                            <div class="reseña-user">@{{ reseña.artista.username }}</div>
+                            <div class="reseña-user">@{{ reseña.solicitud.comision.artista.username }}</div>
                             <div class="reseña-puntuacion">
                                 {% for i in "12345"|make_list %}
                                     {% if forloop.counter <= reseña.puntuacion %}★{% else %}☆{% endif %}
@@ -334,14 +334,6 @@
                     </div>
                     <div class="reseña-fecha">{{ reseña.fecha|date:"d/m/Y" }}</div>
                     <div class="reseña-comentario">{{ reseña.comentario }}</div>
-                </div>
-            {% empty %}
-                <div class="empty-state">
-                    {% if es_propio %}
-                        No has escrito reseñas aún.
-                    {% else %}
-                        Este cliente aún no ha escrito reseñas.
-                    {% endif %}
                 </div>
             {% endfor %}
         </div>

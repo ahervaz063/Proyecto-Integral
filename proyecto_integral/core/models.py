@@ -351,7 +351,7 @@ class SolicitudEncargo(models.Model):
         return False
 
 
-# RESEÑA (cliente -> artista después de finalizar)
+# RESEÑAS
 class Resena(models.Model):
     TIPO_RESEÑA = (
         ('cliente_a_artista', 'Cliente → Artista'),

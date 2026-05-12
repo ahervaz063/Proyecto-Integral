@@ -107,10 +107,13 @@ class PerfilArtistaView(TemplateView):
 
         # Datos públicos (siempre visibles, del artista visitado)
         context['comisiones'] = artista.comisiones.filter(activa=True)
-        context['reseñas'] = artista.reseñas_recibidas.all()
         context['portfolio'] = artista.portfolio.all()
-        context['total_reseñas'] = context['reseñas'].count()
-        context['media_puntuacion'] = context['reseñas'].aggregate(Avg('puntuacion'))['puntuacion__avg'] or 0
+
+        # Reseñas recibidas por el artista (a través de solicitud.cliente)
+        reseñas = artista.reseñas_recibidas.select_related('solicitud__cliente', 'solicitud__cliente__perfil').all()
+        context['reseñas'] = reseñas
+        context['total_reseñas'] = reseñas.count()
+        context['media_puntuacion'] = reseñas.aggregate(Avg('puntuacion'))['puntuacion__avg'] or 0
 
         # Datos privados (solo si el visitante es el dueño del perfil)
         if context['es_propio']:
@@ -130,19 +133,17 @@ class PerfilClienteView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        # Obtener el cliente cuyo perfil se está viendo
         cliente = get_object_or_404(Usuario, id=self.kwargs['pk'], tipo_usuario='cliente')
 
         usuario_actual = self.request.user
         context['cliente'] = cliente
         context['es_propio'] = usuario_actual.is_authenticated and usuario_actual.id == cliente.id
 
-        # Reseñas que el cliente ha escrito (público)
+        # Reseñas que el cliente ha recibido (cuando un artista lo reseña)
         reseñas = Resena.objects.filter(
-            solicitud__cliente=cliente,
-            tipo='cliente_a_artista'
-        ).select_related('artista')
+            artista=cliente,  # El cliente es el "artista" en reseñas artista->cliente
+            tipo='artista_a_cliente'
+        ).select_related('solicitud', 'solicitud__comision')
 
         context['reseñas'] = reseñas
         context['total_reseñas'] = reseñas.count()
@@ -905,75 +906,44 @@ class FinalizarEncargoView(ArtistRequiredMixin, View):
 
 #RESEÑAS
 class ResenaCreateView(LoginRequiredMixin, View):
-    """Crear reseña con AJAX"""
-
     def post(self, request, solicitud_id):
         solicitud = get_object_or_404(SolicitudEncargo, id=solicitud_id)
 
-        # Verificar que la solicitud está finalizada
         if solicitud.estado != 'finalizada':
-            return JsonResponse({
-                'success': False,
-                'error': 'Solo puedes dejar reseña en encargos finalizados.'
-            }, status=400)
+            return JsonResponse({'success': False, 'error': 'Solo puedes dejar reseña en encargos finalizados.'},
+                                status=400)
 
-        # Determinar el tipo de reseña según el usuario
+        # Determinar el tipo de reseña
         if request.user == solicitud.cliente:
             tipo = 'cliente_a_artista'
             artista = solicitud.comision.artista
         elif request.user == solicitud.comision.artista:
             tipo = 'artista_a_cliente'
-            artista = solicitud.cliente
+            artista = solicitud.cliente  # ← El artista está reseñando al cliente
         else:
-            return JsonResponse({
-                'success': False,
-                'error': 'No tienes permiso para reseñar este encargo.'
-            }, status=403)
+            return JsonResponse({'success': False, 'error': 'No tienes permiso.'}, status=403)
 
-        # Verificar que no existe ya una reseña de este tipo
+        # Verificar si ya existe reseña de este tipo
         if solicitud.reseñas.filter(tipo=tipo).exists():
-            return JsonResponse({
-                'success': False,
-                'error': 'Ya has dejado una reseña para este encargo.'
-            }, status=400)
+            return JsonResponse({'success': False, 'error': 'Ya has dejado una reseña para este encargo.'}, status=400)
 
-        # Obtener datos del formulario
         puntuacion = request.POST.get('puntuacion')
         comentario = request.POST.get('comentario')
 
         if not puntuacion or not comentario:
-            return JsonResponse({
-                'success': False,
-                'error': 'Todos los campos son obligatorios.'
-            }, status=400)
-
-        try:
-            puntuacion = int(puntuacion)
-            if puntuacion < 1 or puntuacion > 5:
-                raise ValueError
-        except ValueError:
-            return JsonResponse({
-                'success': False,
-                'error': 'La puntuación debe ser entre 1 y 5.'
-            }, status=400)
+            return JsonResponse({'success': False, 'error': 'Todos los campos son obligatorios.'}, status=400)
 
         # Crear la reseña
         resena = Resena.objects.create(
             solicitud=solicitud,
             tipo=tipo,
-            puntuacion=puntuacion,
+            puntuacion=int(puntuacion),
             comentario=comentario,
-            artista=artista
+            artista=artista  # Para reseña artista->cliente, artista es el cliente
         )
 
-        return JsonResponse({
-            'success': True,
-            'message': 'Reseña enviada correctamente. ¡Gracias por tu opinión!',
-            'reseña_id': resena.id
-        })
+        return JsonResponse({'success': True, 'message': 'Reseña enviada correctamente.'})
 
-    def get(self, request, solicitud_id):
-        return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
 #GUARDAR COMISIÓN
 class GuardarComisionView(ClientRequiredMixin, View):
