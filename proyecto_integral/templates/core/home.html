@@ -118,13 +118,19 @@
 <div class="row">
     {% for artista in top_artistas %}
         <div class="col-md-2 col-6 mb-4">
-            <div class="artist-card position-relative overflow-hidden rounded-circle" onclick="window.location.href='{% url 'perfil_artista' artista.id %}'">
-                <img src="{% if artista.perfil.foto %}{{ artista.perfil.foto.url }}{% else %}{% static 'images/default-artist.jpg' %}{% endif %}" class="img-fluid w-100" style="aspect-ratio: 1; object-fit: cover;">
-                <div class="artist-overlay">
-                    <span>{{ artista.username }}</span>
+            <a href="{% url 'perfil_artista' artista.id %}" style="text-decoration: none; color: inherit;">
+                <div class="artist-card position-relative overflow-hidden rounded-circle">
+                    {% if artista.perfil.foto %}
+                        <img src="{{ artista.perfil.foto.url }}" class="img-fluid w-100" style="aspect-ratio: 1; object-fit: cover;">
+                    {% else %}
+                        <img src="{% static 'images/default-artist.jpg' %}" class="img-fluid w-100" style="aspect-ratio: 1; object-fit: cover;">
+                    {% endif %}
+                    <div class="artist-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
+                        <span class="text-white fw-bold d-none">{{ artista.username }}</span>
+                    </div>
                 </div>
-            </div>
-            <p class="text-center mt-2 fw-bold">{{ artista.username }}</p>
+                <p class="text-center mt-2 fw-bold">{{ artista.username }}</p>
+            </a>
         </div>
     {% empty %}
         <p class="text-center">Próximamente artistas destacados</p>
@@ -136,19 +142,26 @@
 <div class="row">
     {% for comision in top_comisiones %}
         <div class="col-md-2 col-6 mb-4">
-            <div class="comision-card position-relative overflow-hidden rounded-3" onclick="abrirModalComision({{ comision.id }})">
-                <img src="{{ comision.imagen.url|default:'/static/images/default-commission.jpg' }}" class="img-fluid w-100">
-                <div class="comision-overlay">
-                    <span>{{ comision.nombre }}</span>
+            <div class="comision-card position-relative overflow-hidden rounded-3" onclick="abrirModalComision({{ comision.id }})" style="cursor: pointer;">
+                {% if comision.imagen %}
+                    <img src="{{ comision.imagen.url }}" class="img-fluid w-100" style="height: 150px; object-fit: cover;">
+                {% else %}
+                    <img src="{% static 'images/default-commission.jpg' %}" class="img-fluid w-100" style="height: 150px; object-fit: cover;">
+                {% endif %}
+                <div class="comision-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
+                    <span class="text-white fw-bold d-none">{{ comision.nombre }}</span>
                 </div>
             </div>
             <div class="text-center mt-2">
-                <strong>{{ comision.nombre }}</strong>
-                <p class="small text-muted">{{ comision.artista.username }}</p>
-                <p class="fw-bold text-success">{{ comision.precio }}€</p>
+                <strong>{{ comision.nombre }}</strong><br>
+                <small class="text-muted">
+                    🎨 <a href="{% url 'perfil_artista' comision.artista.id %}" style="color: #666; text-decoration: none;">{{ comision.artista.username }}</a>
+                </small><br>
+                <span class="fw-bold text-success">{{ comision.precio }}€</span>
+
                 <!-- Botón guardar comisión (solo cliente logueado) -->
                 {% if user.is_authenticated and user.es_cliente %}
-                    <form method="POST" action="{% url 'guardar_comision' comision.id %}" style="display: inline;">
+                    <form method="POST" action="{% url 'guardar_comision' comision.id %}" style="display: inline; margin-top: 0.5rem;">
                         {% csrf_token %}
                         {% if comision.id in comisiones_guardadas_ids %}
                             <button type="submit" class="btn btn-sm btn-danger">❤️ Guardado</button>
@@ -162,8 +175,6 @@
     {% empty %}
         <p class="text-center">Próximamente comisiones destacadas</p>
     {% endfor %}
-</div>
-
 </div>
 
 <!-- Modal de detalle de comisión -->

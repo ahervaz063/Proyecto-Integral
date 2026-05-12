@@ -26,8 +26,7 @@ urlpatterns = [
     path('comision/<int:comision_id>/guardar/', views.GuardarComisionView.as_view(), name='guardar_comision'),
 
     #Comisiones AJAX
-    path('api/comisiones/', views.ApiComisionesArtistaView.as_view(), name='api_comisiones'),
-    path('comisiones/<int:pk>/datos/', views.ComisionDetailView.as_view(), name='comision_datos'),
+    path('api/comisiones/<int:artista_id>/', views.ApiComisionesArtistaView.as_view(), name='api_comisiones'),    path('comisiones/<int:pk>/datos/', views.ComisionDetailView.as_view(), name='comision_datos'),
     path('comisiones/crear/', views.ComisionCreateView.as_view(), name='comision_create'),
     path('comisiones/<int:pk>/editar/', views.ComisionUpdateView.as_view(), name='comision_update'),
     path('comisiones/<int:pk>/eliminar/', views.ComisionDeleteView.as_view(), name='comision_delete'),
@@ -40,8 +39,7 @@ urlpatterns = [
     path('politicas/<int:pk>/eliminar/', views.PoliticaDeleteView.as_view(), name='politica_delete'),
 
     # Portfolio
-    path('api/portfolio/', views.ApiPortfolioView.as_view(), name='api_portfolio'),
-    path('portfolio/subir/', views.PortfolioCreateView.as_view(), name='portfolio_create'),
+    path('api/portfolio/<int:artista_id>/', views.ApiPortfolioView.as_view(), name='api_portfolio'),    path('portfolio/subir/', views.PortfolioCreateView.as_view(), name='portfolio_create'),
     path('portfolio/<int:pk>/eliminar/', views.PortfolioDeleteView.as_view(), name='portfolio_delete'),
     path('portfolio/<int:pk>/datos/', views.PortfolioDetailView.as_view(), name='portfolio_datos'),
     path('portfolio/<int:pk>/editar/', views.PortfolioUpdateView.as_view(), name='portfolio_update'),

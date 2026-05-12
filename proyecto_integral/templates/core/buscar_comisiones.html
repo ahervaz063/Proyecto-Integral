@@ -189,7 +189,9 @@
                         {% endif %}
                         <div class="comision-info">
                             <div class="comision-titulo">{{ comision.nombre }}</div>
-                            <div class="comision-artista">@{{ comision.artista.username }}</div>
+                            <div class="comision-artista">
+                                🎨 <a href="{% url 'perfil_artista' comision.artista.id %}" style="color: #666; text-decoration: none;">@{{ comision.artista.username }}</a>
+                            </div>
                             <div class="comision-precio">{{ comision.precio }}€</div>
 
                             {% if user.is_authenticated and user.es_cliente %}

@@ -23,7 +23,7 @@
                             {{ solicitud.get_estado_display }}
                         </span>
                     </div>
-                    <p><strong>Artista:</strong> @{{ solicitud.comision.artista.username }}</p>
+                    <strong>Artista: <a href="{% url 'perfil_artista' solicitud.comision.artista.id %}">@{{ solicitud.comision.artista.username }}</a></strong>
                     <p><strong>Precio:</strong> {{ solicitud.comision.precio }}€</p>
                     <p><strong>Descripción de tu idea:</strong> {{ solicitud.descripcion_idea|truncatewords:20 }}</p>
                     <p><strong>Solicitado el:</strong> {{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</p>

@@ -26,7 +26,7 @@
                             {{ solicitud.get_estado_display }}
                         </span>
                     </div>
-                    <p><strong>Cliente:</strong> @{{ solicitud.cliente.username }}</p>
+                    <!-- <p class="small">🎨 <a href="{% url 'perfil_artista' guardado.comision.artista.id %}" style="color: inherit; text-decoration: none;">{{ guardado.comision.artista.username }}</a></p> -->
                     <p><strong>Email:</strong> {{ solicitud.email }}</p>
                     <p><strong>Instagram:</strong> {{ solicitud.instagram|default:"No especificado" }}</p>
                     <p><strong>Descripción:</strong> {{ solicitud.descripcion_idea }}</p>

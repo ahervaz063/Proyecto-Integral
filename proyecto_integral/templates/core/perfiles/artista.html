@@ -301,37 +301,41 @@
 <div class="perfil-container">
     <!-- Sidebar izquierda fija -->
     <aside class="sidebar">
-        <div class="foto-perfil">
-            {% if user.perfil.foto %}
-                <img src="{{ user.perfil.foto.url }}" alt="Foto perfil">
-            {% else %}
-                <img src="{% static 'recursos/perfil-top.jpeg' %}" alt="Foto perfil">
-            {% endif %}
-            <h3>{{ user.get_full_name|default:user.username }}</h3>
-            <p>@{{ user.username }}</p>
+    <div class="foto-perfil">
+        {% if artista.perfil.foto %}
+            <img src="{{ artista.perfil.foto.url }}" alt="Foto perfil">
+        {% else %}
+            <img src="{% static 'recursos/perfil-top.jpeg' %}" alt="Foto perfil">
+        {% endif %}
+        <h3>{{ artista.get_full_name|default:artista.username }}</h3>
+        <p>@{{ artista.username }}</p>
+
+        {# Solo mostrar botón de editar perfil si es el dueño #}
+        {% if es_propio %}
             <a href="#" class="editar-perfil" onclick="abrirModalEditarPerfil(); return false;">Editar perfil</a>
-        </div>
-        <div class="descripcion">
-            <p>{{ user.perfil.descripcion|default:"Sin descripción aún." }}</p>
-        </div>
-        <div class="social-links">
-            {% if user.perfil.redes_sociales.instagram %}
-                <a href="{{ user.perfil.redes_sociales.instagram }}">📷 Instagram</a>
-            {% else %}
-                <a href="#">📷 Instagram</a>
-            {% endif %}
-            {% if user.perfil.redes_sociales.twitter %}
-                <a href="{{ user.perfil.redes_sociales.twitter }}">🐦 Twitter</a>
-            {% else %}
-                <a href="#">🐦 Twitter</a>
-            {% endif %}
-            {% if user.perfil.redes_sociales.behance %}
-                <a href="{{ user.perfil.redes_sociales.behance }}">🎨 Behance</a>
-            {% else %}
-                <a href="#">🎨 Behance</a>
-            {% endif %}
-        </div>
-    </aside>
+        {% endif %}
+    </div>
+    <div class="descripcion">
+        <p>{{ artista.perfil.descripcion|default:"Sin descripción aún." }}</p>
+    </div>
+    <div class="social-links">
+        {% if artista.perfil.redes_sociales.instagram %}
+            <a href="{{ artista.perfil.redes_sociales.instagram }}">Instagram</a>
+        {% else %}
+            <a href="#">Instagram</a>
+        {% endif %}
+        {% if artista.perfil.redes_sociales.twitter %}
+            <a href="{{ artista.perfil.redes_sociales.twitter }}">Twitter</a>
+        {% else %}
+            <a href="#">Twitter</a>
+        {% endif %}
+        {% if artista.perfil.redes_sociales.behance %}
+            <a href="{{ artista.perfil.redes_sociales.behance }}">TikTok</a>
+        {% else %}
+            <a href="#">TikTok</a>
+        {% endif %}
+    </div>
+</aside>
 
     <!-- Contenido principal -->
     <div class="contenido">
@@ -339,76 +343,204 @@
         <div class="tabs">
             <button class="tab activo" data-tab="comisiones">Comisiones</button>
             <button class="tab" data-tab="portfolio">Portfolio</button>
-            <button class="tab" data-tab="politicas">Políticas</button>
-            <button class="tab" data-tab="solicitudes">Solicitudes</button>
             <button class="tab" data-tab="reseñas">Reseñas</button>
+
+            {% if es_propio %}
+                <button class="tab" data-tab="politicas">Políticas</button>
+                <button class="tab" data-tab="solicitudes">Solicitudes</button>
+            {% endif %}
         </div>
 
             <!-- Paneles (contenido) -->
                 <div class="panel-container">
-             <!-- Panel Comisiones -->
-                <div id="comisiones" class="panel">
-                    <div id="lista-comisiones">
-                    <!-- Las comisiones se cargarán dinámicamente con JavaScript -->
-                    <div class="text-center">Cargando comisiones...</div>
-                </div>
-                    <button class="btn-mas" onclick="abrirModalCrearComision()">+ Añadir comisión</button>
-                </div>
-
-            <!-- Panel Portfolio -->
-            <div id="portfolio" class="panel oculto">
-                <div id="galeria-portfolio" class="galeria">
-                    <div class="text-center">Cargando portfolio...</div>
-                </div>
-                <button class="btn-mas" onclick="abrirModalPortfolio()">+ Añadir imagen</button>
-            </div>
-
-            <!-- Panel Políticas -->
-            <div id="politicas" class="panel oculto">
-                <div id="lista-politicas">
-                    <div class="text-center">Cargando políticas...</div>
-                </div>
-                <button class="btn-mas" onclick="abrirModalCrearPolitica()">+ Añadir política</button>
-            </div>
-
-            <!-- Panel Solicitudes -->
-            <div id="solicitudes" class="panel oculto">
-                <div id="lista-solicitudes">
-                    <div class="text-center">Cargando solicitudes...</div>
-                </div>
-            </div>
-
-            <!-- Panel Reseñas -->
-            <div id="reseñas" class="panel oculto">
-                <div class="media-resumen">
-                    <div class="media-numero">{{ media_puntuacion|floatformat:1|default:"0" }} / 5</div>
-                    <div>{{ total_reseñas|default:"0" }} reseñas</div>
-                </div>
-                {% for reseña in reseñas %}
-                    <div class="reseña-card">
-                        <div class="reseña-header">
-                            {% if reseña.solicitud.cliente.perfil.foto %}
-                                <img src="{{ reseña.solicitud.cliente.perfil.foto.url }}" class="reseña-foto">
-                            {% else %}
-                                <img src="{% static 'recursos/mononoke.jpg' %}" class="reseña-foto">
-                            {% endif %}
-                            <div>
-                                <div class="reseña-user">@{{ reseña.solicitud.cliente.username }}</div>
-                                <div class="reseña-puntuacion">
-                                    {% for i in "12345"|make_list %}
-                                        {% if forloop.counter <= reseña.puntuacion %}★{% else %}☆{% endif %}
-                                    {% endfor %}
-                                    {{ reseña.puntuacion }} / 5
-                                </div>
-                            </div>
-                        </div>
-                        <div class="reseña-fecha">{{ reseña.fecha|date:"d/m/Y" }}</div>
-                        <div class="reseña-comentario">{{ reseña.comentario }}</div>
+<!-- Panel Comisiones -->
+<div id="comisiones" class="panel">
+    <div id="lista-comisiones">
+        {% for comision in comisiones %}
+            <div class="comision-card">
+                {% if comision.imagen %}
+                    <img src="{{ comision.imagen.url }}" alt="{{ comision.nombre }}" class="comision-img">
+                {% else %}
+                    <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="Ejemplo" class="comision-img">
+                {% endif %}
+                <div class="comision-info">
+                    <div class="comision-titulo">{{ comision.nombre }}</div>
+                    <div class="badges">
+                        <span class="badge">📦 {{ comision.slots_disponibles }} slots</span>
+                        <span class="badge">⏱️ {{ comision.tiempo_estimado }} días</span>
+                        <span class="badge">💰 {{ comision.precio }}€</span>
                     </div>
-                {% endfor %}
+                    <div class="comision-desc">{{ comision.descripcion|truncatewords:20 }}</div>
+                </div>
+                {% if es_propio %}
+                <div class="comision-acciones">
+                    <span class="icono-accion" onclick="abrirModalEditarComision({{ comision.id }})">✏️</span>
+                    <span class="icono-accion" onclick="eliminarComision({{ comision.id }}, '{{ comision.nombre|escapejs }}')">🗑️</span>
+                </div>
+                {% endif %}
             </div>
+        {% empty %}
+            <div class="comision-card">
+                <div class="comision-info">
+                    <div class="comision-titulo">No hay comisiones aún</div>
+                    <div class="comision-desc">
+                        {% if es_propio %}
+                            Crea tu primera comisión usando el botón "+ Añadir comisión".
+                        {% else %}
+                            Este artista aún no ha publicado comisiones.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    {% if es_propio %}
+        <button class="btn-mas" onclick="abrirModalCrearComision()">+ Añadir comisión</button>
+    {% endif %}
+</div>
+
+<!-- Panel Portfolio -->
+<div id="portfolio" class="panel oculto">
+    <div id="galeria-portfolio" class="galeria">
+        {% for imagen in portfolio %}
+            <div class="item-portfolio">
+                <img src="{{ imagen.imagen.url }}" alt="{{ imagen.titulo }}">
+                {% if es_propio %}
+                <div class="portfolio-acciones">
+                    <span onclick="abrirModalEditarPortfolio({{ imagen.id }})">✏️</span>
+                    <span onclick="eliminarImagenPortfolio({{ imagen.id }}, '{{ imagen.titulo|escapejs }}')">🗑️</span>
+                </div>
+                {% endif %}
+                <div class="portfolio-titulo">{{ imagen.titulo|default:"Sin título" }}</div>
+            </div>
+        {% empty %}
+            <div class="empty-state">
+                {% if es_propio %}
+                    No tienes imágenes en tu portfolio.
+                {% else %}
+                    Este artista aún no tiene imágenes en su portfolio.
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    {% if es_propio %}
+        <button class="btn-mas" onclick="abrirModalPortfolio()">+ Añadir imagen</button>
+    {% endif %}
+</div>
+
+<!-- Panel Políticas (solo dueño) -->
+{% if es_propio %}
+    <div id="politicas" class="panel oculto">
+        <div id="lista-politicas">
+            {% for politica in politicas %}
+                <div class="policy-card">
+                    <div class="policy-icono">⚙️</div>
+                    <div class="policy-info">
+                        <div class="policy-nombre">{{ politica.nombre }}</div>
+                        <div class="policy-desc">{{ politica.info_general|truncatewords:10 }}</div>
+                    </div>
+                    <div class="comision-acciones">
+                        <span class="icono-accion" onclick="abrirModalEditarPolitica({{ politica.id }})">✏️</span>
+                        <span class="icono-accion" onclick="eliminarPolitica({{ politica.id }}, '{{ politica.nombre|escapejs }}')">🗑️</span>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="policy-card">
+                    <div class="policy-icono">⚙️</div>
+                    <div class="policy-info">
+                        <div class="policy-nombre">Sin políticas</div>
+                        <div class="policy-desc">Añade políticas usando el botón "+ Añadir política".</div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        <button class="btn-mas" onclick="abrirModalCrearPolitica()">+ Añadir política</button>
+    </div>
+{% endif %}
+
+<!-- Panel Solicitudes (solo dueño) -->
+{% if es_propio %}
+    <div id="solicitudes" class="panel oculto">
+        <div id="lista-solicitudes">
+            {% for solicitud in solicitudes_recibidas %}
+                <div class="solicitud-card" style="background-color: #fafafa; border: 1px solid #eee; border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                    <div class="d-flex justify-content-between">
+                        <strong>Cliente: <a href="{% url 'perfil_cliente' solicitud.cliente.id %}" style="color: inherit; text-decoration: none;">@{{ solicitud.cliente.username }}</a></strong>
+                        <span class="badge
+                            {% if solicitud.estado == 'pendiente' %}bg-warning
+                            {% elif solicitud.estado == 'aceptada' %}bg-success
+                            {% elif solicitud.estado == 'rechazada' %}bg-danger
+                            {% else %}badge-secondary{% endif %}">
+                            {{ solicitud.get_estado_display }}
+                        </span>
+                    </div>
+                    <p><strong>Comisión:</strong> {{ solicitud.comision.nombre }}</p>
+                    <p><strong>Descripción:</strong> {{ solicitud.descripcion_idea|truncatewords:30 }}</p>
+
+                    {% if solicitud.estado == 'pendiente' %}
+                        <div class="mt-2">
+                            <button class="btn btn-success btn-sm" onclick="aceptarSolicitud({{ solicitud.id }})">Aceptar</button>
+                            <button class="btn btn-danger btn-sm" onclick="rechazarSolicitud({{ solicitud.id }})">Rechazar</button>
+                        </div>
+                    {% elif solicitud.estado == 'aceptada' %}
+                        <div class="mt-2">
+                            <button class="btn btn-info btn-sm" onclick="finalizarEncargo({{ solicitud.id }})">🎉 Finalizar encargo</button>
+                        </div>
+                    {% endif %}
+                </div>
+            {% empty %}
+                <p>No has recibido solicitudes aún.</p>
+            {% endfor %}
         </div>
     </div>
+{% endif %}
+
+<!-- Panel Reseñas (público) -->
+<div id="reseñas" class="panel oculto">
+    <div class="media-resumen">
+        <div class="media-numero">{{ media_puntuacion|floatformat:1|default:"0" }} / 5</div>
+        <div>{{ total_reseñas|default:"0" }} reseñas</div>
+    </div>
+    {% for reseña in reseñas %}
+        <div class="reseña-card">
+            <div class="reseña-header">
+                {% if reseña.cliente.perfil.foto %}
+                    <img src="{{ reseña.cliente.perfil.foto.url }}" alt="{{ reseña.cliente.username }}" class="reseña-foto">
+                {% else %}
+                    <img src="{% static 'recursos/mononoke.jpg' %}" alt="usuario" class="reseña-foto">
+                {% endif %}
+                <div>
+                    <div class="reseña-user">@{{ reseña.cliente.username }}</div>
+                    <div class="reseña-puntuacion">
+                        {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= reseña.puntuacion %}★{% else %}☆{% endif %}
+                        {% endfor %}
+                        {{ reseña.puntuacion }} / 5
+                    </div>
+                </div>
+            </div>
+            <div class="reseña-fecha">{{ reseña.fecha|date:"d/m/Y" }}</div>
+            <div class="reseña-comentario">{{ reseña.comentario }}</div>
+        </div>
+    {% empty %}
+        <div class="reseña-card">
+            <div class="reseña-header">
+                <img src="{% static 'recursos/mononoke.jpg' %}" alt="usuario" class="reseña-foto">
+                <div>
+                    <div class="reseña-user">Sin reseñas aún</div>
+                    <div class="reseña-puntuacion">★★★★★ 0 / 5</div>
+                </div>
+            </div>
+            <div class="reseña-fecha">--/--/----</div>
+            <div class="reseña-comentario">
+                {% if es_propio %}
+                    Cuando completes encargos, los clientes podrán valorarte.
+                {% else %}
+                    Este artista aún no tiene reseñas.
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
 </div>
 
 
@@ -816,6 +948,7 @@ let comisionEditandoId = null;
 const csrfToken = '{{ csrf_token }}';
 window.csrfToken = csrfToken;
 console.log('CSRF Token cargado:', csrfToken ? 'OK' : 'VACIO');
+window.artistaId = {{ artista.id }};
 
 function getCookie(name) {
     let cookieValue = null;
@@ -1188,7 +1321,10 @@ function recargarListaComisiones() {
 
     listaComisiones.innerHTML = '<div class="text-center">Cargando comisiones...</div>';
 
-    fetch('/api/comisiones/')
+    // Obtener el ID del artista desde la URL o desde una variable global
+    const artistaId = window.artistaId || {{ artista.id }};
+
+    fetch(`/api/comisiones/${artistaId}/`)
         .then(response => response.json())
         .then(data => {
             if (data.comisiones && data.comisiones.length > 0) {
@@ -1318,7 +1454,9 @@ function recargarPortfolio() {
 
     galeria.innerHTML = '<div class="text-center">Cargando portfolio...</div>';
 
-    fetch('/api/portfolio/')
+    const artistaId = window.artistaId || {{ artista.id }};
+
+    fetch(`/api/portfolio/${artistaId}/`)
         .then(response => response.json())
         .then(data => {
             if (data.imagenes && data.imagenes.length > 0) {

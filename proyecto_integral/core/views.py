@@ -21,22 +21,31 @@ class HomeView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Top 5 artistas (por media de reseñas)
+        # Top 5 artistas (por media de reseñas) - con select_related para optimizar
         context['top_artistas'] = Usuario.objects.filter(
             tipo_usuario='artista'
-        ).annotate(
+        ).select_related('perfil').annotate(
             media_puntuacion=Avg('reseñas_recibidas__puntuacion')
         ).order_by('-media_puntuacion')[:5]
 
-        # Top 5 comisiones más populares (más solicitudes)
+        # Top 5 comisiones más populares (más solicitudes) - con artista precargado
         context['top_comisiones'] = Comision.objects.filter(
             activa=True
-        ).annotate(
+        ).select_related('artista').annotate(
             num_solicitudes=Count('solicitudes')
         ).order_by('-num_solicitudes')[:5]
 
         # Mostrar todas las categorías en carrusel
         context['categorias'] = Comision.CATEGORIAS_CHOICES
+
+        # ✅ AÑADIDO: Comisiones guardadas para cliente logueado (para el corazón)
+        if self.request.user.is_authenticated and self.request.user.es_cliente():
+            guardadas = ComisionGuardada.objects.filter(
+                cliente=self.request.user
+            ).values_list('comision_id', flat=True)
+            context['comisiones_guardadas_ids'] = list(guardadas)
+        else:
+            context['comisiones_guardadas_ids'] = []
 
         return context
 
@@ -78,25 +87,40 @@ def logout_view(request):
 
 
 # PERFILES
+from django.shortcuts import get_object_or_404
+
+
 class PerfilArtistaView(TemplateView):
     template_name = 'core/perfiles/artista.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = self.request.user
-        if user.es_artista():
-            reseñas = Resena.objects.filter(
-                solicitud__comision__artista=user,
-                tipo='cliente_a_artista'
-            ).select_related('solicitud__cliente')
-            context['reseñas'] = reseñas
-            context['total_reseñas'] = reseñas.count()
-            context['media_puntuacion'] = reseñas.aggregate(Avg('puntuacion'))['puntuacion__avg'] or 0
 
-            # Solicitudes recibidas
+        # Obtener el artista cuyo perfil se está viendo (el ID viene en la URL)
+        artista = get_object_or_404(Usuario, id=self.kwargs['pk'], tipo_usuario='artista')
+
+        # Usuario logueado (para saber si es el dueño del perfil)
+        usuario_actual = self.request.user
+
+        context['artista'] = artista
+        context['es_propio'] = usuario_actual.is_authenticated and usuario_actual.id == artista.id
+
+        # Datos públicos (siempre visibles, del artista visitado)
+        context['comisiones'] = artista.comisiones.filter(activa=True)
+        context['reseñas'] = artista.reseñas_recibidas.all()
+        context['portfolio'] = artista.portfolio.all()
+        context['total_reseñas'] = context['reseñas'].count()
+        context['media_puntuacion'] = context['reseñas'].aggregate(Avg('puntuacion'))['puntuacion__avg'] or 0
+
+        # Datos privados (solo si el visitante es el dueño del perfil)
+        if context['es_propio']:
+            context['politicas'] = artista.politicas.all()
             context['solicitudes_recibidas'] = SolicitudEncargo.objects.filter(
-                comision__artista=user
+                comision__artista=artista
             ).select_related('cliente', 'comision').order_by('-fecha_solicitud')
+        else:
+            context['politicas'] = []
+            context['solicitudes_recibidas'] = []
 
         return context
 
@@ -106,42 +130,34 @@ class PerfilClienteView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = self.request.user
-        if user.es_cliente():
-            # Solicitudes del cliente
-            solicitudes = user.solicitudes_realizadas.all()
-            context['solicitudes'] = solicitudes
 
-            # Comisiones guardadas (favoritas)
-            comisiones_guardadas = ComisionGuardada.objects.filter(cliente=user).select_related('comision',
-                                                                                                'comision__artista')
-            context['comisiones_guardadas'] = comisiones_guardadas
+        # Obtener el cliente cuyo perfil se está viendo
+        cliente = get_object_or_404(Usuario, id=self.kwargs['pk'], tipo_usuario='cliente')
 
-            # RESEÑAS ESCRITAS POR EL CLIENTE (cliente → artista)
-            reseñas_escritas = Resena.objects.filter(
-                solicitud__cliente=user,
-                tipo='cliente_a_artista'
-            )
-            context['reseñas_escritas'] = reseñas_escritas
+        usuario_actual = self.request.user
+        context['cliente'] = cliente
+        context['es_propio'] = usuario_actual.is_authenticated and usuario_actual.id == cliente.id
 
-            # RESEÑAS RECIBIDAS POR EL CLIENTE (artista → cliente)
-            reseñas_recibidas = Resena.objects.filter(
-                solicitud__cliente=user,
-                tipo='artista_a_cliente'
-            )
-            context['reseñas_recibidas'] = reseñas_recibidas
+        # Reseñas que el cliente ha escrito (público)
+        reseñas = Resena.objects.filter(
+            solicitud__cliente=cliente,
+            tipo='cliente_a_artista'
+        ).select_related('artista')
 
-            # Total de reseñas (para la media)
-            todas_reseñas = list(reseñas_escritas) + list(reseñas_recibidas)
-            context['total_reseñas'] = len(todas_reseñas)
-            if todas_reseñas:
-                media = sum(r.puntuacion for r in todas_reseñas) / len(todas_reseñas)
-                context['media_puntuacion'] = media
-            else:
-                context['media_puntuacion'] = 0
+        context['reseñas'] = reseñas
+        context['total_reseñas'] = reseñas.count()
+        context['media_puntuacion'] = reseñas.aggregate(Avg('puntuacion'))['puntuacion__avg'] or 0
+
+        # Datos privados (solo si es el dueño)
+        if context['es_propio']:
+            context['solicitudes'] = cliente.solicitudes_realizadas.all()
+            context['comisiones_guardadas'] = ComisionGuardada.objects.filter(cliente=cliente).select_related(
+                'comision', 'comision__artista')
+        else:
+            context['solicitudes'] = []
+            context['comisiones_guardadas'] = []
 
         return context
-
 
 class EditarPerfilView(TemplateView):
     model = Usuario
@@ -454,14 +470,18 @@ class ComisionDeleteView(ArtistRequiredMixin, View):
         return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
 
-class ApiComisionesArtistaView(ArtistRequiredMixin, View):
-    """Vista AJAX para obtener las comisiones del artista logueado"""
+class ApiComisionesArtistaView(View):
+    """Vista AJAX para obtener las comisiones de un artista (pública)"""
 
     def get(self, request, *args, **kwargs):
-        if not request.user.es_artista():
+        artista_id = kwargs.get('artista_id') or request.GET.get('artista_id')
+        if not artista_id:
             return JsonResponse({'comisiones': []})
 
-        comisiones = Comision.objects.filter(artista=request.user).order_by('-creada_en')
+        comisiones = Comision.objects.filter(
+            artista_id=artista_id,
+            activa=True
+        ).order_by('-creada_en')
 
         data = []
         for c in comisiones:
@@ -476,7 +496,6 @@ class ApiComisionesArtistaView(ArtistRequiredMixin, View):
             })
 
         return JsonResponse({'comisiones': data})
-
 
 
 # POLÍTICAS
@@ -657,11 +676,16 @@ class PortfolioUpdateView(ArtistRequiredMixin, View):
             }
         })
 
-class ApiPortfolioView(ArtistRequiredMixin, View):
-    """Obtener todas las imágenes del portfolio del artista"""
 
-    def get(self, request):
-        imagenes = PortfolioImagen.objects.filter(artista=request.user).order_by('-fecha_subida')
+class ApiPortfolioView(View):
+    """Obtener todas las imágenes del portfolio de un artista (pública)"""
+
+    def get(self, request, *args, **kwargs):
+        artista_id = kwargs.get('artista_id') or request.GET.get('artista_id')
+        if not artista_id:
+            return JsonResponse({'imagenes': []})
+
+        imagenes = PortfolioImagen.objects.filter(artista_id=artista_id).order_by('-fecha_subida')
         data = []
         for img in imagenes:
             data.append({

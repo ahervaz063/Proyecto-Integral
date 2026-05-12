@@ -7,7 +7,7 @@
         <img src="{{ comision.imagen.url }}" alt="{{ comision.nombre }}" style="width: 100%; border-radius: 12px;">
     {% endif %}
 
-    <p><strong>Artista:</strong> @{{ comision.artista.username }}</p>
+    <p><strong>Artista:</strong> <a href="{% url 'perfil_artista' comision.artista.id %}" target="_blank">@{{ comision.artista.username }}</a></p>
     <p><strong>Precio:</strong> {{ comision.precio }}€</p>
     <p><strong>Plazo estimado:</strong> {{ comision.tiempo_estimado }} días</p>
     <p><strong>Descripción:</strong> {{ comision.descripcion }}</p>
