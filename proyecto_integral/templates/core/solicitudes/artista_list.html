@@ -11,74 +11,71 @@
         <span class="badge bg-warning">Pendientes: {{ solicitudes_pendientes }}</span>
     </div>
     
-    {% if solicitudes %}
-        {% for solicitud in solicitudes %}
-            <div class="card mb-3">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <h5>{{ solicitud.comision.nombre }}</h5>
-                        <span class="badge 
-                            {% if solicitud.estado == 'pendiente' %}bg-warning
-                            {% elif solicitud.estado == 'aceptada' %}bg-success
-                            {% elif solicitud.estado == 'rechazada' %}bg-danger
-                            {% elif solicitud.estado == 'finalizada' %}bg-info
-                            {% else %}bg-secondary{% endif %}">
-                            {{ solicitud.get_estado_display }}
-                        </span>
-                    </div>
-                    <!-- <p class="small">🎨 <a href="{% url 'perfil_artista' guardado.comision.artista.id %}" style="color: inherit; text-decoration: none;">{{ guardado.comision.artista.username }}</a></p> -->
-                    <p><strong>Email:</strong> {{ solicitud.email }}</p>
-                    <p><strong>Instagram:</strong> {{ solicitud.instagram|default:"No especificado" }}</p>
-                    <p><strong>Descripción:</strong> {{ solicitud.descripcion_idea }}</p>
-                    <p><strong>Fecha:</strong> {{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</p>
-                    
-                    {% if solicitud.estado == 'pendiente' %}
-                        <div class="mt-3">
-                            <a href="{% url 'aceptar_solicitud' solicitud.id %}" class="btn btn-success btn-sm" onclick="return confirm('¿Aceptar esta solicitud? Se ocupará un slot.')">✅ Aceptar</a>
-                            <a href="{% url 'rechazar_solicitud' solicitud.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Rechazar esta solicitud?')">❌ Rechazar</a>
-                        </div>
-                    {% elif solicitud.estado == 'aceptada' %}
-                        <div class="mt-3">
-                            <a href="{% url 'finalizar_encargo' solicitud.id %}" class="btn btn-info btn-sm" onclick="return confirm('¿Marcar como finalizado? El cliente podrá dejarte una reseña.')">🎉 Finalizar encargo</a>
-                        </div>
-                    {% elif solicitud.estado == 'finalizada' and not solicitud.reseña_artista %}
-                        <div class="mt-3">
-                            <button class="btn btn-primary btn-sm" onclick="abrirModalResena({{ solicitud.id }}, 'cliente')">
-                                ⭐ Valorar al cliente
-                            </button>
-                        </div>
-                    {% elif solicitud.estado == 'finalizada' and solicitud.reseña_artista %}
-                        <div class="mt-3">
-                            <span class="badge bg-success">Ya valoraste a este cliente</span>
-                        </div>
-                    {% endif %}
+{% if solicitudes %}
+    {% for solicitud in solicitudes %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <h5>{{ solicitud.comision.nombre }}</h5>
+                    <span class="badge
+                        {% if solicitud.estado == 'pendiente' %}bg-warning
+                        {% elif solicitud.estado == 'aceptada' %}bg-success
+                        {% elif solicitud.estado == 'rechazada' %}bg-danger
+                        {% elif solicitud.estado == 'finalizada' %}bg-info
+                        {% else %}bg-secondary{% endif %}">
+                        {{ solicitud.get_estado_display }}
+                    </span>
                 </div>
+                <p><strong>Email:</strong> {{ solicitud.email }}</p>
+                <p><strong>Instagram:</strong> {{ solicitud.instagram|default:"No especificado" }}</p>
+                <p><strong>Descripción:</strong> {{ solicitud.descripcion_idea }}</p>
+                <p><strong>Fecha:</strong> {{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</p>
+
+                {% if solicitud.estado == 'pendiente' %}
+                    <div class="mt-3">
+                        <button class="btn btn-success btn-sm" onclick="aceptarSolicitud({{ solicitud.id }})">✅ Aceptar</button>
+                        <button class="btn btn-danger btn-sm" onclick="rechazarSolicitud({{ solicitud.id }})">❌ Rechazar</button>
+                    </div>
+                {% elif solicitud.estado == 'aceptada' %}
+                    <div class="mt-3">
+                        <button class="btn btn-info btn-sm" onclick="finalizarEncargo({{ solicitud.id }})">🎉 Finalizar encargo</button>
+                    </div>
+                {% elif solicitud.estado == 'finalizada' %}
+                    <div class="mt-3">
+                        {% with tiene_resena_artista=solicitud.reseñas.all|dictsortreversed:"id" %}
+                            {% if tiene_resena_artista.0.tipo == 'artista_a_cliente' %}
+                                <span class="badge bg-success">✅ Ya valoraste a este cliente</span>
+                            {% else %}
+                                <button class="btn btn-primary btn-sm" onclick="abrirModalResena({{ solicitud.id }}, 'artista')">
+                                    ⭐ Valorar al cliente
+                                </button>
+                            {% endif %}
+                        {% endwith %}
+                    </div>
+                {% endif %}
             </div>
-        {% endfor %}
-        
-        {% if is_paginated %}
-            <nav>
-                <ul class="pagination">
-                    {% if page_obj.has_previous %}
-                        <li class="page-item"><a class="page-link" href="?page=1">« Primera</a></li>
-                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
-                    {% endif %}
-                    <li class="page-item active"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
-                    {% if page_obj.has_next %}
-                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
-                        <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última »</a></li>
-                    {% endif %}
-                </ul>
-            </nav>
-        {% endif %}
-    {% else %}
-        <div class="alert alert-info">No has recibido ninguna solicitud aún.</div>
+        </div>
+    {% endfor %}
+
+    {% if is_paginated %}
+        <nav>
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page=1">« Primera</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última »</a></li>
+                {% endif %}
+            </ul>
+        </nav>
     {% endif %}
-    
-    <div class="mt-3">
-        <a href="{% url 'perfil_artista' user.id %}" class="btn btn-secondary">Volver a mi perfil</a>
-    </div>
-</div>
+{% else %}
+    <div class="alert alert-info">No has recibido ninguna solicitud aún.</div>
+{% endif %}
+
 
 <!-- Modal para reseña -->
 <div id="modal-resena" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1001; align-items: center; justify-content: center;">

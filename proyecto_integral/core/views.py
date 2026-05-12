@@ -905,6 +905,8 @@ class FinalizarEncargoView(ArtistRequiredMixin, View):
 
 #RESEÑAS
 class ResenaCreateView(LoginRequiredMixin, View):
+    """Crear reseña con AJAX"""
+
     def post(self, request, solicitud_id):
         solicitud = get_object_or_404(SolicitudEncargo, id=solicitud_id)
 
@@ -912,66 +914,66 @@ class ResenaCreateView(LoginRequiredMixin, View):
         if solicitud.estado != 'finalizada':
             return JsonResponse({
                 'success': False,
-                'error': 'Solo puedes reseñar encargos finalizados.'
+                'error': 'Solo puedes dejar reseña en encargos finalizados.'
             }, status=400)
 
-        # Verificar que el usuario es parte del encargo
-        if request.user != solicitud.cliente and request.user != solicitud.comision.artista:
+        # Determinar el tipo de reseña según el usuario
+        if request.user == solicitud.cliente:
+            tipo = 'cliente_a_artista'
+            artista = solicitud.comision.artista
+        elif request.user == solicitud.comision.artista:
+            tipo = 'artista_a_cliente'
+            artista = solicitud.cliente
+        else:
             return JsonResponse({
                 'success': False,
                 'error': 'No tienes permiso para reseñar este encargo.'
             }, status=403)
 
-        # Determinar el tipo de reseña según quién escribe
-        if request.user.es_cliente():
-            tipo = 'cliente_a_artista'
-            # Verificar si ya existe reseña del cliente
-            if Resena.objects.filter(solicitud=solicitud, tipo=tipo).exists():
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Ya has dejado una reseña como cliente para este encargo.'
-                }, status=400)
-        else:
-            tipo = 'artista_a_cliente'
-            # Verificar si ya existe reseña del artista
-            if Resena.objects.filter(solicitud=solicitud, tipo=tipo).exists():
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Ya has dejado una reseña como artista para este encargo.'
-                }, status=400)
+        # Verificar que no existe ya una reseña de este tipo
+        if solicitud.reseñas.filter(tipo=tipo).exists():
+            return JsonResponse({
+                'success': False,
+                'error': 'Ya has dejado una reseña para este encargo.'
+            }, status=400)
 
-        # Obtener puntuación y comentario
+        # Obtener datos del formulario
         puntuacion = request.POST.get('puntuacion')
         comentario = request.POST.get('comentario')
 
-        # Validar puntuación
-        if not puntuacion or int(puntuacion) not in range(1, 6):
+        if not puntuacion or not comentario:
             return JsonResponse({
                 'success': False,
-                'error': 'La puntuación debe ser entre 1 y 5 estrellas.'
+                'error': 'Todos los campos son obligatorios.'
+            }, status=400)
+
+        try:
+            puntuacion = int(puntuacion)
+            if puntuacion < 1 or puntuacion > 5:
+                raise ValueError
+        except ValueError:
+            return JsonResponse({
+                'success': False,
+                'error': 'La puntuación debe ser entre 1 y 5.'
             }, status=400)
 
         # Crear la reseña
-        try:
-            Resena.objects.create(
-                solicitud=solicitud,
-                tipo=tipo,
-                puntuacion=puntuacion,
-                comentario=comentario
-            )
-        except IntegrityError:
-            return JsonResponse({
-                'success': False,
-                'error': 'Ya existe una reseña de este tipo para este encargo.'
-            }, status=400)
+        resena = Resena.objects.create(
+            solicitud=solicitud,
+            tipo=tipo,
+            puntuacion=puntuacion,
+            comentario=comentario,
+            artista=artista
+        )
 
-        # Mensaje según quién reseña
-        if request.user.es_cliente():
-            mensaje = "¡Gracias por tu reseña! Ayuda a otros usuarios."
-        else:
-            mensaje = "Has valorado a este cliente correctamente."
+        return JsonResponse({
+            'success': True,
+            'message': 'Reseña enviada correctamente. ¡Gracias por tu opinión!',
+            'reseña_id': resena.id
+        })
 
-        return JsonResponse({'success': True, 'message': mensaje})
+    def get(self, request, solicitud_id):
+        return JsonResponse({'success': False, 'error': 'Método no permitido'}, status=405)
 
 #GUARDAR COMISIÓN
 class GuardarComisionView(ClientRequiredMixin, View):
