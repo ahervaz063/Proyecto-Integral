@@ -271,30 +271,32 @@
 {% block content %}
 <div class="perfil-container">
     <!-- Sidebar izquierda fija -->
-    <aside class="sidebar">
-        <div class="foto-perfil">
-            {% if user.perfil.foto %}
-                <img src="{{ user.perfil.foto.url }}" alt="Foto perfil">
-            {% else %}
-                <img src="{% static 'recursos/perfil-top.jpeg' %}" alt="Foto perfil">
-            {% endif %}
-            <h3>{{ user.get_full_name|default:user.username }}</h3>
-            <p>@{{ user.username }}</p>
+<aside class="sidebar">
+    <div class="foto-perfil">
+        {% if cliente.perfil.foto %}
+            <img src="{{ cliente.perfil.foto.url }}" alt="Foto perfil">
+        {% else %}
+            <img src="{% static 'recursos/perfil-top.jpeg' %}" alt="Foto perfil">
+        {% endif %}
+        <h3>{{ cliente.get_full_name|default:cliente.username }}</h3>
+        <p>@{{ cliente.username }}</p>
+        {% if es_propio %}
             <a href="#" class="editar-perfil" onclick="abrirModalEditarPerfil(); return false;">Editar perfil</a>
-        </div>
-        <div class="descripcion">
-            <p>{{ user.perfil.descripcion|default:"Sin descripción aún." }}</p>
-        </div>
-        <div class="social-links">
-            {% if user.perfil.redes_sociales %}
-                {% for red, url in user.perfil.redes_sociales.items %}
-                    <a href="{{ url }}">📷 {{ red|title }}</a>
-                {% endfor %}
-            {% else %}
-                <a href="#">No hay redes sociales añadidas</a>
-            {% endif %}
-        </div>
-    </aside>
+        {% endif %}
+    </div>
+    <div class="descripcion">
+        <p>{{ cliente.perfil.descripcion|default:"Sin descripción aún." }}</p>
+    </div>
+    <div class="social-links">
+        {% if cliente.perfil.redes_sociales %}
+            {% for red, url in cliente.perfil.redes_sociales.items %}
+                <a href="{{ url }}">📷 {{ red|title }}</a>
+            {% endfor %}
+        {% else %}
+            <a href="#">No hay redes sociales añadidas</a>
+        {% endif %}
+    </div>
+</aside>
 
     <!-- Contenido principal -->
     <div class="contenido">
@@ -302,106 +304,78 @@
             <button class="tab activo" data-tab="reseñas">Reseñas</button>
 
             {% if es_propio %}
-                <button class="tab" data-tab="comisiones">Mis Comisiones</button>
                 <button class="tab" data-tab="guardados">Guardar comisiones</button>
             {% endif %}
         </div>
 
         <div class="panel-container">
-        <!-- Panel Reseñas (público) -->
-        <div id="reseñas" class="panel">
-            <div class="media-resumen">
-                <div class="media-numero">{{ media_puntuacion|floatformat:1|default:"0" }} / 5</div>
-                <div>{{ total_reseñas|default:"0" }} reseñas escritas</div>
-            </div>
-            {% for reseña in reseñas %}
-                <div class="reseña-card">
-                    <div class="reseña-header">
-                        {% if reseña.solicitud.comision.artista.perfil.foto %}
-                            <img src="{{ reseña.solicitud.comision.artista.perfil.foto.url }}" alt="{{ reseña.solicitud.comision.artista.username }}" class="reseña-foto">
-                        {% else %}
-                            <img src="{% static 'recursos/mononoke.jpg' %}" alt="artista" class="reseña-foto">
-                        {% endif %}
-                        <div>
-                            <div class="reseña-user">@{{ reseña.solicitud.comision.artista.username }}</div>
-                            <div class="reseña-puntuacion">
-                                {% for i in "12345"|make_list %}
-                                    {% if forloop.counter <= reseña.puntuacion %}★{% else %}☆{% endif %}
-                                {% endfor %}
-                                {{ reseña.puntuacion }} / 5
-                            </div>
-                        </div>
-                    </div>
-                    <div class="reseña-fecha">{{ reseña.fecha|date:"d/m/Y" }}</div>
-                    <div class="reseña-comentario">{{ reseña.comentario }}</div>
+            <!-- Panel Reseñas (público) -->
+            <div id="reseñas" class="panel">
+                <div class="media-resumen">
+                    <div class="media-numero">{{ media_puntuacion|floatformat:1|default:"0" }} / 5</div>
+                    <div>{{ total_reseñas|default:"0" }} reseñas escritas</div>
                 </div>
-            {% endfor %}
-        </div>
-
-        <!-- Panel Mis Comisiones (solo dueño) -->
-        {% if es_propio %}
-            <div id="comisiones" class="panel oculto">
-                {% for solicitud in solicitudes %}
-                    <div class="comision-card">
-                        {% if solicitud.comision.imagen %}
-                            <img src="{{ solicitud.comision.imagen.url }}" alt="{{ solicitud.comision.nombre }}" class="comision-img">
-                        {% else %}
-                            <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="Ejemplo" class="comision-img">
-                        {% endif %}
-                        <div class="comision-info">
-                            <div class="comision-titulo">{{ solicitud.comision.nombre }}</div>
-                            <div class="badges">
-                                <span class="badge">🎨 <a href="{% url 'perfil_artista' solicitud.comision.artista.id %}" style="color: inherit; text-decoration: none;">{{ solicitud.comision.artista.username }}</a></span>
-                                <span class="badge">{{ solicitud.comision.precio }}€</span>
+                {% for reseña in reseñas %}
+                    <div class="reseña-card">
+                        <div class="reseña-header">
+                            {% if reseña.solicitud.comision.artista.perfil.foto %}
+                                <img src="{{ reseña.solicitud.comision.artista.perfil.foto.url }}" alt="{{ reseña.solicitud.comision.artista.username }}" class="reseña-foto">
+                            {% else %}
+                                <img src="{% static 'recursos/mononoke.jpg' %}" alt="artista" class="reseña-foto">
+                            {% endif %}
+                            <div>
+                                <div class="reseña-user">@{{ reseña.solicitud.comision.artista.username }}</div>
+                                <div class="reseña-puntuacion">
+                                    {% for i in "12345"|make_list %}
+                                        {% if forloop.counter <= reseña.puntuacion %}★{% else %}☆{% endif %}
+                                    {% endfor %}
+                                    {{ reseña.puntuacion }} / 5
+                                </div>
                             </div>
-                            <div class="comision-desc">{{ solicitud.descripcion_idea|truncatewords:15 }}</div>
-                            {% if solicitud.estado == 'pendiente' %}
-                                <button class="btn-accion" onclick="cancelarSolicitudCliente({{ solicitud.id }})">Cancelar</button>
-                            {% endif %}
                         </div>
-                        <div class="estado estado-{{ solicitud.estado }}">
-                            {% if solicitud.estado == 'pendiente' %}Pendiente
-                            {% elif solicitud.estado == 'aceptada' %}Aceptada
-                            {% elif solicitud.estado == 'rechazada' %}Rechazada
-                            {% elif solicitud.estado == 'finalizada' %}Finalizada
-                            {% endif %}
-                        </div>
+                        <div class="reseña-fecha">{{ reseña.fecha|date:"d/m/Y" }}</div>
+                        <div class="reseña-comentario">{{ reseña.comentario }}</div>
                     </div>
                 {% empty %}
                     <div class="empty-state">
-                        <p>No tienes comisiones solicitadas aún.</p>
-                        <a href="{% url 'buscar_comisiones' %}" class="btn btn-primary">Explorar comisiones</a>
+                        {% if es_propio %}
+                            No has escrito reseñas aún.
+                        {% else %}
+                            Este cliente aún no ha escrito reseñas.
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>
 
             <!-- Panel Guardar comisiones (solo dueño) -->
-            <div id="guardados" class="panel oculto">
-                <div class="galeria">
-                    {% for guardado in comisiones_guardadas %}
-                        <div class="item-guardado">
-                            {% if guardado.comision.imagen %}
-                                <img src="{{ guardado.comision.imagen.url }}" alt="{{ guardado.comision.nombre }}">
-                            {% else %}
-                                <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="Comisión">
-                            {% endif %}
-                            <div class="corazon-lleno">❤️</div>
-                            <div class="guardado-info">
-                                <strong>{{ guardado.comision.nombre }}</strong>
-                                <p class="small">🎨 <a href="{% url 'perfil_artista' guardado.comision.artista.id %}" style="color: inherit; text-decoration: none;">{{ guardado.comision.artista.username }}</a></p>
-                                <p class="small">{{ guardado.comision.precio }}€</p>
-                                <a href="{% url 'buscar_comisiones' %}?q={{ guardado.comision.nombre }}" style="color: #007bff; font-size: 0.8rem;">Ver detalles →</a>
+            {% if es_propio %}
+                <div id="guardados" class="panel oculto">
+                    <div class="galeria">
+                        {% for guardado in comisiones_guardadas %}
+                            <div class="item-guardado">
+                                {% if guardado.comision.imagen %}
+                                    <img src="{{ guardado.comision.imagen.url }}" alt="{{ guardado.comision.nombre }}">
+                                {% else %}
+                                    <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="Comisión">
+                                {% endif %}
+                                <div class="corazon-lleno">❤️</div>
+                                <div class="guardado-info">
+                                    <strong>{{ guardado.comision.nombre }}</strong>
+                                    <p class="small">🎨 <a href="{% url 'perfil_artista' guardado.comision.artista.id %}" style="color: inherit; text-decoration: none;">{{ guardado.comision.artista.username }}</a></p>
+                                    <p class="small">{{ guardado.comision.precio }}€</p>
+                                    <a href="{% url 'buscar_comisiones' %}?q={{ guardado.comision.nombre }}" style="color: #007bff; font-size: 0.8rem;">Ver detalles →</a>
+                                </div>
                             </div>
-                        </div>
-                    {% empty %}
-                        <div class="empty-state" style="width: 100%;">
-                            <p>No tienes comisiones guardadas.</p>
-                            <p>Explora comisiones y haz clic en el corazón ❤️ para guardar tus favoritas.</p>
-                        </div>
-                    {% endfor %}
+                        {% empty %}
+                            <div class="empty-state" style="width: 100%;">
+                                <p>No tienes comisiones guardadas.</p>
+                                <p>Explora comisiones y haz clic en el corazón ❤️ para guardar tus favoritas.</p>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
 
 <!-- Modal / Popup para editar perfil -->
 <div id="modal-editar-perfil" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">

@@ -347,52 +347,15 @@
 
             {% if es_propio %}
                 <button class="tab" data-tab="politicas">Políticas</button>
-                <button class="tab" data-tab="solicitudes">Solicitudes</button>
             {% endif %}
         </div>
 
-            <!-- Paneles (contenido) -->
-                <div class="panel-container">
+<!-- Paneles (contenido) -->
+<div class="panel-container">
 <!-- Panel Comisiones -->
 <div id="comisiones" class="panel">
     <div id="lista-comisiones">
-        {% for comision in comisiones %}
-            <div class="comision-card">
-                {% if comision.imagen %}
-                    <img src="{{ comision.imagen.url }}" alt="{{ comision.nombre }}" class="comision-img">
-                {% else %}
-                    <img src="{% static 'recursos/ejemplo-dibujo.jpg' %}" alt="Ejemplo" class="comision-img">
-                {% endif %}
-                <div class="comision-info">
-                    <div class="comision-titulo">{{ comision.nombre }}</div>
-                    <div class="badges">
-                        <span class="badge">📦 {{ comision.slots_disponibles }} slots</span>
-                        <span class="badge">⏱️ {{ comision.tiempo_estimado }} días</span>
-                        <span class="badge">💰 {{ comision.precio }}€</span>
-                    </div>
-                    <div class="comision-desc">{{ comision.descripcion|truncatewords:20 }}</div>
-                </div>
-                {% if es_propio %}
-                <div class="comision-acciones">
-                    <span class="icono-accion" onclick="abrirModalEditarComision({{ comision.id }})">✏️</span>
-                    <span class="icono-accion" onclick="eliminarComision({{ comision.id }}, '{{ comision.nombre|escapejs }}')">🗑️</span>
-                </div>
-                {% endif %}
-            </div>
-        {% empty %}
-            <div class="comision-card">
-                <div class="comision-info">
-                    <div class="comision-titulo">No hay comisiones aún</div>
-                    <div class="comision-desc">
-                        {% if es_propio %}
-                            Crea tu primera comisión usando el botón "+ Añadir comisión".
-                        {% else %}
-                            Este artista aún no ha publicado comisiones.
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
+        <div class="text-center">Cargando comisiones...</div>
     </div>
     {% if es_propio %}
         <button class="btn-mas" onclick="abrirModalCrearComision()">+ Añadir comisión</button>
@@ -459,7 +422,7 @@
 {% endif %}
 
 <!-- Panel Solicitudes (solo dueño) -->
-{% if es_propio %}
+<!-- {% if es_propio %}
     <div id="solicitudes" class="panel oculto">
         <div id="lista-solicitudes">
             {% for solicitud in solicitudes_recibidas %}
@@ -493,7 +456,7 @@
             {% endfor %}
         </div>
     </div>
-{% endif %}
+{% endif %} -->
 
 <!-- Panel Reseñas (público) -->
 <div id="reseñas" class="panel oculto">
@@ -921,6 +884,15 @@
     </div>
 </div>
 
+<!-- Modal de detalle de comisión -->
+<div id="modal-detalle-comision" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
+    <div style="background-color: white; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; border-radius: 20px; padding: 2rem; position: relative;">
+        <button onclick="cerrarModalDetalleComision()" style="position: absolute; top: 10px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        <div id="modal-body">
+            <p class="text-center">Cargando...</p>
+        </div>
+    </div>
+</div>
 
 
 
@@ -929,8 +901,10 @@
 let comisionEditandoId = null;
 const csrfToken = '{{ csrf_token }}';
 window.csrfToken = csrfToken;
-console.log('CSRF Token cargado:', csrfToken ? 'OK' : 'VACIO');
 window.artistaId = {{ artista.id }};
+window.esPropio = {{ es_propio|lower }};
+console.log('CSRF Token cargado:', csrfToken ? 'OK' : 'VACIO');
+console.log('esPropio:', window.esPropio);
 
 function getCookie(name) {
     let cookieValue = null;
@@ -1201,6 +1175,42 @@ function abrirModalEditarComision(comisionId) {
         });
 }
 
+
+function abrirModalComision(comisionId) {
+    const modal = document.getElementById('modal-detalle-comision');
+    const modalBody = document.getElementById('modal-body');
+
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+    modalBody.innerHTML = '<p class="text-center">Cargando...</p>';
+
+    fetch(`/comision/${comisionId}/detalle-modal/`)
+        .then(response => response.text())
+        .then(html => {
+            modalBody.innerHTML = html;
+            const scripts = modalBody.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                if (oldScript.src) {
+                    newScript.src = oldScript.src;
+                } else {
+                    newScript.textContent = oldScript.textContent;
+                }
+                document.body.appendChild(newScript);
+                document.body.removeChild(newScript);
+            });
+        })
+        .catch(error => {
+            modalBody.innerHTML = '<p class="text-center text-danger">Error al cargar la información.</p>';
+        });
+}
+
+function cerrarModalDetalleComision() {
+    const modal = document.getElementById('modal-detalle-comision');
+    if (modal) modal.style.display = 'none';
+}
+
 function cerrarModalComision() {
     document.getElementById('modal-comision').style.display = 'none';
 }
@@ -1303,7 +1313,6 @@ function recargarListaComisiones() {
 
     listaComisiones.innerHTML = '<div class="text-center">Cargando comisiones...</div>';
 
-    // Obtener el ID del artista desde la URL o desde una variable global
     const artistaId = window.artistaId || {{ artista.id }};
 
     fetch(`/api/comisiones/${artistaId}/`)
@@ -1311,7 +1320,7 @@ function recargarListaComisiones() {
         .then(data => {
             if (data.comisiones && data.comisiones.length > 0) {
                 listaComisiones.innerHTML = data.comisiones.map(comision => `
-                    <div class="comision-card" data-id="${comision.id}">
+                    <div class="comision-card" data-id="${comision.id}" onclick="abrirModalComision(${comision.id})" style="cursor: pointer;">
                         ${comision.imagen_url ? `<img src="${comision.imagen_url}" alt="${comision.nombre}" class="comision-img">` : '<div class="comision-img" style="background:#eee; display:flex;align-items:center;justify-content:center;">📷</div>'}
                         <div class="comision-info">
                             <div class="comision-titulo">${escapeHtml(comision.nombre)}</div>
@@ -1322,18 +1331,21 @@ function recargarListaComisiones() {
                             </div>
                             <div class="comision-desc">${escapeHtml(comision.descripcion)}</div>
                         </div>
+                        ${window.esPropio ? `
                         <div class="comision-acciones">
-                            <span class="icono-accion" onclick="abrirModalEditarComision(${comision.id})">✏️</span>
-                            <span class="icono-accion" onclick="eliminarComision(${comision.id}, '${escapeHtml(comision.nombre)}')">🗑️</span>
+                            <span class="icono-accion" onclick="event.stopPropagation(); abrirModalEditarComision(${comision.id})">✏️</span>
+                            <span class="icono-accion" onclick="event.stopPropagation(); eliminarComision(${comision.id}, '${escapeHtml(comision.nombre)}')">🗑️</span>
                         </div>
+                        ` : ''}
                     </div>
                 `).join('');
             } else {
-                listaComisiones.innerHTML = '<div class="empty-state">No tienes comisiones creadas aún.</div>';
+                listaComisiones.innerHTML = '<div class="empty-state">No hay comisiones disponibles.</div>';
             }
             comisionEditandoId = null;
         })
         .catch(error => {
+            console.error("Error cargando comisiones:", error);
             listaComisiones.innerHTML = '<div class="empty-state">Error al cargar las comisiones.</div>';
         });
 }
