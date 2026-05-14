@@ -64,4 +64,7 @@ urlpatterns = [
     #Búsqueda
     path('buscar/comisiones/', views.BuscarComisionesView.as_view(), name='buscar_comisiones'),
     path('comision/<int:comision_id>/detalle-modal/', views.comision_detalle_modal, name='comision_detalle_modal'),
+
+    #Eliminar cuenta
+    path('eliminar-cuenta/', views.EliminarCuentaView.as_view(), name='eliminar_cuenta'),
 ]

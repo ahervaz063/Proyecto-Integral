@@ -446,6 +446,16 @@
                     <div style="text-align: center;">
                         <button type="submit" id="btn-guardar-perfil" style="background-color: #333; color: white; padding: 0.8rem 2rem; border: none; border-radius: 30px; cursor: pointer;">Guardar cambios</button>
                     </div>
+                    <!-- Botón eliminar cuenta -->
+                    <div style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+                        <button type="button" onclick="eliminarCuenta()" style="background: none; border: none; color: #dc3545; font-size: 0.8rem; cursor: pointer; text-decoration: underline;">
+                            🗑️ Eliminar mi cuenta
+                        </button>
+                        <p style="font-size: 0.7rem; color: #999; margin-top: 0.5rem;">
+                            Esta acción es irreversible. Se eliminarán todos tus datos.
+                        </p>
+                    </div>
+
                 </div>
             </div>
         </form>
@@ -629,6 +639,38 @@
             descripcionElem.textContent = data.perfil.descripcion || 'Sin descripción aún.';
         }
     }
+
+function eliminarCuenta() {
+    if (!confirm('¿Estás ABSOLUTAMENTE SEGURO? Esta acción es irreversible.\n\nSe eliminarán:\n- Tu perfil y todos tus datos\n- Tus comisiones\n- Tus solicitudes\n- Tus reseñas\n- Tu historial completo\n\n¿Deseas continuar?')) {
+        return;
+    }
+
+    if (!confirm('Última confirmación: ¿Eliminar tu cuenta permanentemente?')) {
+        return;
+    }
+
+    fetch('/eliminar-cuenta/', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarMensaje(data.message, 'success');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
+        } else {
+            mostrarMensaje(data.error || 'Error al eliminar la cuenta', 'error');
+        }
+    })
+    .catch(error => {
+        mostrarMensaje('Error de conexión', 'error');
+    });
+}
 
     // ============================================
     // CERRAR MODAL AL HACER CLIC FUERA

@@ -87,9 +87,6 @@ def logout_view(request):
 
 
 # PERFILES
-from django.shortcuts import get_object_or_404
-
-
 class PerfilArtistaView(TemplateView):
     template_name = 'core/perfiles/artista.html'
 
@@ -302,6 +299,17 @@ class EditarPerfilAJAXView(LoginRequiredMixin, View):
             }
         })
 
+#ELIMINAR CUENTA
+class EliminarCuentaView(LoginRequiredMixin, View):
+    """Eliminar la cuenta del usuario y todos sus datos"""
+
+    def post(self, request):
+        user = request.user
+        # Cerrar sesión antes de eliminar
+        logout(request)
+        # Eliminar el usuario en cascada
+        user.delete()
+        return JsonResponse({'success': True, 'message': 'Cuenta eliminada correctamente.'})
 
 
 # COMISIONES
@@ -1048,3 +1056,5 @@ def comision_detalle_modal(request, comision_id):
         'user_id': user_id,
         'solicitud_activa': solicitud_activa
     })
+
+

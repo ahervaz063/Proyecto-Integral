@@ -47,6 +47,12 @@
                                     <li><a class="dropdown-item" href="{% url 'perfil_cliente' user.id %}">Mi Perfil</a></li>
                                     <li><a class="dropdown-item" href="{% url 'mis_solicitudes_cliente' %}">Mis Solicitudes</a></li>
                                 {% endif %}
+
+                                {% if user.is_staff or user.es_admin %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="/admin/">Panel de Administración</a></li>
+                                {% endif %}
+
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar sesión</a></li>
                             </ul>
