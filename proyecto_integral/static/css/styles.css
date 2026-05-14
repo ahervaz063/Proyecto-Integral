@@ -77,3 +77,15 @@
 .item-portfolio img:hover {
     transform: scale(1.02);
 }
+
+
+/* Comisiones guardadas*/
+.item-guardado {
+    width: calc(33% - 1rem);
+    position: relative;
+    background-color: #fafafa;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: pointer;
+}

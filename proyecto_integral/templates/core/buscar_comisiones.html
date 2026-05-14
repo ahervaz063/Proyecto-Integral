@@ -193,6 +193,13 @@
                                 🎨 <a href="{% url 'perfil_artista' comision.artista.id %}" style="color: #666; text-decoration: none;">@{{ comision.artista.username }}</a>
                             </div>
                             <div class="comision-precio">{{ comision.precio }}€</div>
+                                <div class="mt-2">
+                                    {% if comision.slots_disponibles > 0 %}
+                                        <span class="badge bg-success">{{ comision.slots_disponibles }} slots</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Sin slots</span>
+                                    {% endif %}
+                                </div>
 
                             {% if user.is_authenticated and user.es_cliente %}
                                 <!-- Botón de guardar (siempre visible) -->

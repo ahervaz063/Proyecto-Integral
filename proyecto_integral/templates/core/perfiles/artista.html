@@ -1325,7 +1325,9 @@ function recargarListaComisiones() {
                         <div class="comision-info">
                             <div class="comision-titulo">${escapeHtml(comision.nombre)}</div>
                             <div class="badges">
-                                <span class="badge">📦 ${comision.slots_disponibles} slots</span>
+                                ${comision.slots_disponibles > 0
+                                ? `<span class="badge">📦 ${comision.slots_disponibles} slots</span>`
+                                : `<span class="badge" style="background-color: #dc3545;">❌ Sin slots</span>`}
                                 <span class="badge">⏱️ ${comision.tiempo_estimado} días</span>
                                 <span class="badge">💰 ${comision.precio}€</span>
                             </div>

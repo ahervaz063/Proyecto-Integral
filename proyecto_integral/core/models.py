@@ -347,6 +347,8 @@ class SolicitudEncargo(models.Model):
         if self.estado == 'aceptada':
             self.estado = 'finalizada'
             self.save()
+            self.comision.slots_ocupados -= 1
+            self.comision.save()
             return True
         return False
 

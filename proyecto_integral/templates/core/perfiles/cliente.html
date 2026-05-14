@@ -352,7 +352,7 @@
                 <div id="guardados" class="panel oculto">
                     <div class="galeria">
                         {% for guardado in comisiones_guardadas %}
-                            <div class="item-guardado">
+                             <div class="item-guardado" onclick="abrirModalComision({{ guardado.comision.id }})" style="cursor: pointer;">
                                 {% if guardado.comision.imagen %}
                                     <img src="{{ guardado.comision.imagen.url }}" alt="{{ guardado.comision.nombre }}">
                                 {% else %}
@@ -363,7 +363,11 @@
                                     <strong>{{ guardado.comision.nombre }}</strong>
                                     <p class="small">🎨 <a href="{% url 'perfil_artista' guardado.comision.artista.id %}" style="color: inherit; text-decoration: none;">{{ guardado.comision.artista.username }}</a></p>
                                     <p class="small">{{ guardado.comision.precio }}€</p>
-                                    <a href="{% url 'buscar_comisiones' %}?q={{ guardado.comision.nombre }}" style="color: #007bff; font-size: 0.8rem;">Ver detalles →</a>
+                                    {% if guardado.comision.slots_disponibles > 0 %}
+                                        <p class="small text-success">{{ guardado.comision.slots_disponibles }} slots disponibles</p>
+                                    {% else %}
+                                        <p class="small text-danger">Sin slots disponibles</p>
+                                    {% endif %}
                                 </div>
                             </div>
                         {% empty %}
@@ -635,5 +639,57 @@
             modalPerfil.style.display = 'none';
         }
     }
+
+
+// MODAL DE DETALLE DE COMISIÓN
+function abrirModalComision(comisionId) {
+    // Crear el modal si no existe
+    let modal = document.getElementById('modal-detalle-comision');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modal-detalle-comision';
+        modal.className = 'modal';
+        modal.style.cssText = 'display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;';
+        modal.innerHTML = `
+            <div style="background-color: white; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; border-radius: 20px; padding: 2rem; position: relative;">
+                <button onclick="cerrarModalDetalleComision()" style="position: absolute; top: 10px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                <div id="modal-body">
+                    <p class="text-center">Cargando...</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    const modalBody = document.getElementById('modal-body');
+    modal.style.display = 'flex';
+    modalBody.innerHTML = '<p class="text-center">Cargando...</p>';
+
+    fetch(`/comision/${comisionId}/detalle-modal/`)
+        .then(response => response.text())
+        .then(html => {
+            modalBody.innerHTML = html;
+            // Ejecutar scripts dentro del modal
+            const scripts = modalBody.querySelectorAll('script');
+            scripts.forEach(oldScript => {
+                const newScript = document.createElement('script');
+                if (oldScript.src) {
+                    newScript.src = oldScript.src;
+                } else {
+                    newScript.textContent = oldScript.textContent;
+                }
+                document.body.appendChild(newScript);
+                document.body.removeChild(newScript);
+            });
+        })
+        .catch(error => {
+            modalBody.innerHTML = '<p class="text-center text-danger">Error al cargar la información.</p>';
+        });
+}
+
+function cerrarModalDetalleComision() {
+    const modal = document.getElementById('modal-detalle-comision');
+    if (modal) modal.style.display = 'none';
+}
 </script>
 {% endblock %}
