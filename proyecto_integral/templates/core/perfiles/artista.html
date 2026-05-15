@@ -911,8 +911,10 @@ const csrfToken = '{{ csrf_token }}';
 window.csrfToken = csrfToken;
 window.artistaId = {{ artista.id }};
 window.esPropio = {{ es_propio|lower }};
+window.esCliente = {% if user.is_authenticated and user.es_cliente %}true{% else %}false{% endif %};
 console.log('CSRF Token cargado:', csrfToken ? 'OK' : 'VACIO');
 console.log('esPropio:', window.esPropio);
+console.log('esCliente:', window.esCliente);
 
 function getCookie(name) {
     let cookieValue = null;
@@ -1365,20 +1367,27 @@ function recargarListaComisiones() {
                         <div class="comision-info">
                             <div class="comision-titulo">${escapeHtml(comision.nombre)}</div>
                             <div class="badges">
-                                ${comision.slots_disponibles > 0
-                                ? `<span class="badge">📦 ${comision.slots_disponibles} slots</span>`
-                                : `<span class="badge" style="background-color: #dc3545;">Sin slots</span>`}
+                                <span class="badge">📦 ${comision.slots_disponibles} slots</span>
                                 <span class="badge">⏱️ ${comision.tiempo_estimado} días</span>
                                 <span class="badge">💰 ${comision.precio}€</span>
                             </div>
                             <div class="comision-desc">${escapeHtml(comision.descripcion)}</div>
+                            ${window.esPropio ? `
+                            <div class="comision-acciones">
+                                <span class="icono-accion" onclick="event.stopPropagation(); abrirModalEditarComision(${comision.id})">✏️</span>
+                                <span class="icono-accion" onclick="event.stopPropagation(); eliminarComision(${comision.id}, '${escapeHtml(comision.nombre)}')">🗑️</span>
+                            </div>
+                            ` : `
+                            ${window.esCliente ? `
+                            <div class="mt-2">
+                                <button class="btn btn-sm ${comision.esta_guardada ? 'btn-danger' : 'btn-outline-danger'}"
+                                        onclick="event.stopPropagation(); toggleGuardarComision(${comision.id}, this)">
+                                    ${comision.esta_guardada ? '❤️ Guardado' : '🤍 Guardar'}
+                                </button>
+                            </div>
+                            ` : ''}
+                            `}
                         </div>
-                        ${window.esPropio ? `
-                        <div class="comision-acciones">
-                            <span class="icono-accion" onclick="event.stopPropagation(); abrirModalEditarComision(${comision.id})">✏️</span>
-                            <span class="icono-accion" onclick="event.stopPropagation(); eliminarComision(${comision.id}, '${escapeHtml(comision.nombre)}')">🗑️</span>
-                        </div>
-                        ` : ''}
                     </div>
                 `).join('');
             } else {

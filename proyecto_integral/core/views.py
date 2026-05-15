@@ -35,10 +35,15 @@ class HomeView(TemplateView):
             num_solicitudes=Count('solicitudes')
         ).order_by('-num_solicitudes')[:5]
 
+        # Mostar comisionees
+        context['comisiones_recientes'] = Comision.objects.filter(
+            activa=True
+        ).select_related('artista').order_by('-creada_en')[:12]
+
         # Mostrar todas las categorías en carrusel
         context['categorias'] = Comision.CATEGORIAS_CHOICES
 
-        # ✅ AÑADIDO: Comisiones guardadas para cliente logueado (para el corazón)
+        # Comisiones guardadas para cliente logueado
         if self.request.user.is_authenticated and self.request.user.es_cliente():
             guardadas = ComisionGuardada.objects.filter(
                 cliente=self.request.user
@@ -492,6 +497,12 @@ class ApiComisionesArtistaView(View):
             activa=True
         ).order_by('-creada_en')
 
+        guardadas_ids = []
+        if request.user.is_authenticated and request.user.es_cliente():
+            guardadas_ids = ComisionGuardada.objects.filter(
+                cliente=request.user
+            ).values_list('comision_id', flat=True)
+
         data = []
         for c in comisiones:
             data.append({
@@ -502,6 +513,7 @@ class ApiComisionesArtistaView(View):
                 'tiempo_estimado': c.tiempo_estimado,
                 'descripcion': c.descripcion[:100],
                 'imagen_url': c.imagen.url if c.imagen else None,
+                'esta_guardada': c.id in guardadas_ids,
             })
 
         return JsonResponse({'comisiones': data})
@@ -954,25 +966,30 @@ class ResenaCreateView(LoginRequiredMixin, View):
 
 
 #GUARDAR COMISIÓN
+# core/views.py
 class GuardarComisionView(ClientRequiredMixin, View):
-    """Vista para guardar o eliminar una comisión de favoritos (usando POST)"""
+    """Vista AJAX para guardar o eliminar una comisión de favoritos"""
 
     def post(self, request, comision_id):
         comision = get_object_or_404(Comision, id=comision_id)
         guardado = ComisionGuardada.objects.filter(cliente=request.user, comision=comision)
 
         if guardado.exists():
-            # Si ya está guardada, la eliminamos
             guardado.delete()
-            messages.success(request, f"Comisión '{comision.nombre}' eliminada de favoritos.")
+            return JsonResponse({
+                'success': True,
+                'message': f'Comisión "{comision.nombre}" eliminada de favoritos.',
+                'action': 'removed',
+                'comision_id': comision.id
+            })
         else:
-            # Si no está guardada, la añadimos
             ComisionGuardada.objects.create(cliente=request.user, comision=comision)
-            messages.success(request, f"Comisión '{comision.nombre}' guardada en favoritos.")
-
-        # Redirigir a la página anterior
-        return redirect(request.META.get('HTTP_REFERER', 'home'))
-
+            return JsonResponse({
+                'success': True,
+                'message': f'Comisión "{comision.nombre}" guardada en favoritos.',
+                'action': 'added',
+                'comision_id': comision.id
+            })
 
 #BÚSQUEDA
 class BuscarComisionesView(ListView):

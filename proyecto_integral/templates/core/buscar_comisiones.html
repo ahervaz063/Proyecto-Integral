@@ -203,14 +203,12 @@
 
                             {% if user.is_authenticated and user.es_cliente %}
                                 <!-- Botón de guardar (siempre visible) -->
-                                <form method="POST" action="{% url 'guardar_comision' comision.id %}" style="display: inline;">
-                                    {% csrf_token %}
-                                    {% if comision.id in comisiones_guardadas_ids %}
-                                        <button type="submit" class="btn btn-sm btn-danger mt-2">❤️ Guardado</button>
-                                    {% else %}
-                                        <button type="submit" class="btn btn-sm btn-outline-danger mt-2">🤍 Guardar</button>
-                                    {% endif %}
-                                </form>
+                                {% if user.is_authenticated and user.es_cliente %}
+                                    <button class="btn btn-sm {% if comision.id in comisiones_guardadas_ids %}btn-danger{% else %}btn-outline-danger{% endif %} mt-2"
+                                            onclick="event.stopPropagation(); toggleGuardarComision({{ comision.id }}, this)">
+                                        {% if comision.id in comisiones_guardadas_ids %}❤️ Guardado{% else %}🤍 Guardar{% endif %}
+                                    </button>
+                                {% endif %}
 
                                 <!-- Mensaje informativo si ya solicitó esta comisión -->
                                 {% if comision.id in comisiones_solicitadas_ids %}

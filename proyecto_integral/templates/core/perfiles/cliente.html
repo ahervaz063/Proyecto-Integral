@@ -352,7 +352,7 @@
                 <div id="guardados" class="panel oculto">
                     <div class="galeria">
                         {% for guardado in comisiones_guardadas %}
-                             <div class="item-guardado" onclick="abrirModalComision({{ guardado.comision.id }})" style="cursor: pointer;">
+                             <div class="item-guardado">
                                 {% if guardado.comision.imagen %}
                                     <img src="{{ guardado.comision.imagen.url }}" alt="{{ guardado.comision.nombre }}">
                                 {% else %}
@@ -361,13 +361,14 @@
                                 <div class="corazon-lleno">❤️</div>
                                 <div class="guardado-info">
                                     <strong>{{ guardado.comision.nombre }}</strong>
-                                    <p class="small">🎨 <a href="{% url 'perfil_artista' guardado.comision.artista.id %}" style="color: inherit; text-decoration: none;">{{ guardado.comision.artista.username }}</a></p>
+                                    <p class="small">🎨 {{ guardado.comision.artista.username }}</p>
                                     <p class="small">{{ guardado.comision.precio }}€</p>
-                                    {% if guardado.comision.slots_disponibles > 0 %}
-                                        <p class="small text-success">{{ guardado.comision.slots_disponibles }} slots disponibles</p>
-                                    {% else %}
-                                        <p class="small text-danger">Sin slots disponibles</p>
-                                    {% endif %}
+
+                                    <!-- Botón para eliminar de favoritos (AJAX) -->
+                                    <button class="btn btn-sm btn-outline-danger mt-2"
+                                            onclick="toggleGuardarComision({{ guardado.comision.id }}, this)">
+                                        💔 Eliminar
+                                    </button>
                                 </div>
                             </div>
                         {% empty %}
@@ -732,6 +733,17 @@ function abrirModalComision(comisionId) {
 function cerrarModalDetalleComision() {
     const modal = document.getElementById('modal-detalle-comision');
     if (modal) modal.style.display = 'none';
+}
+
+function recargarComisionesGuardadas() {
+    const galeria = document.getElementById('galeria-guardados');
+    if (!galeria) return;
+
+    fetch('/api/comisiones-guardadas/')
+        .then(response => response.json())
+        .then(data => {
+            // Actualizar la galería
+        });
 }
 </script>
 {% endblock %}

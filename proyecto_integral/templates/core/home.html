@@ -10,69 +10,160 @@
     .transition {
         transition: all 0.3s ease;
     }
-    .hover-bg-opacity-75:hover {
-        background-color: rgba(0,0,0,0.75) !important;
-    }
-    .hover-bg-opacity-75:hover .d-none {
-        display: block !important;
-    }
     .category-card, .artist-card, .comision-card {
         cursor: pointer;
+        overflow: hidden;
+        border-radius: 12px;
     }
     .category-card img, .artist-card img, .comision-card img {
         transition: transform 0.3s ease;
+        width: 100%;
+        object-fit: cover;
     }
     .category-card:hover img, .artist-card:hover img, .comision-card:hover img {
         transform: scale(1.05);
     }
 
+    /* Estilos para el overlay de categorías (sin fondo negro) */
+    .category-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(0,0,0,0.3);
+    }
+    .category-overlay h3 {
+        color: white;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        font-size: 1.2rem;
+    }
+
+    /* Estilos para el overlay de artistas (sin fondo negro) */
+    .artist-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(0,0,0,0);
+        transition: background-color 0.3s ease;
+    }
+    .artist-overlay span {
+        display: none;
+        color: white;
+        font-weight: bold;
+    }
+    .artist-card:hover .artist-overlay {
+        background-color: rgba(0,0,0,0.5);
+    }
+    .artist-card:hover .artist-overlay span {
+        display: block;
+    }
+
+    /* Estilos para el overlay de comisiones (sin fondo negro) */
+    .comision-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(0,0,0,0);
+        transition: background-color 0.3s ease;
+    }
+    .comision-overlay span {
+        display: none;
+        color: white;
+        font-weight: bold;
+        text-align: center;
+        padding: 0.5rem;
+    }
+    .comision-card:hover .comision-overlay {
+        background-color: rgba(0,0,0,0.5);
+    }
+    .comision-card:hover .comision-overlay span {
+        display: block;
+    }
+
     /* Estilos para el modal de detalle */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0,0,0,0.5);
-    z-index: 10000;
-    align-items: center;
-    justify-content: center;
-}
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+    }
+    .modal-contenido {
+        background-color: white;
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow-y: auto;
+        border-radius: 20px;
+        padding: 2rem;
+        position: relative;
+    }
+    .cerrar-modal {
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
+    #modal-body img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 12px;
+    }
+    #modal-body .alert {
+        padding: 1rem;
+        border-radius: 8px;
+    }
 
-.modal-contenido {
-    background-color: white;
-    width: 90%;
-    max-width: 800px;
-    max-height: 90vh;
-    overflow-y: auto;
-    border-radius: 20px;
-    padding: 2rem;
-    position: relative;
-}
-
-.cerrar-modal {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-
-/* Asegurar que el contenido del modal use Bootstrap */
-#modal-body img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 12px;
-}
-
-#modal-body .alert {
-    padding: 1rem;
-    border-radius: 8px;
-}
+    /* Hero section */
+    .hero-section {
+        position: relative;
+        width: 100%;
+        height: 50vh;
+        overflow: hidden;
+    }
+    .hero-section img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .hero-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .hero-content {
+        text-align: center;
+        color: white;
+    }
 </style>
 
-
+<!-- Hero Section -->
 <div class="hero-section">
     <img src="{% static 'images/hero-image.jpg' %}" alt="Hero background">
     <div class="hero-overlay">
@@ -125,8 +216,8 @@
                     {% else %}
                         <img src="{% static 'images/default-artist.jpg' %}" class="img-fluid w-100" style="aspect-ratio: 1; object-fit: cover;">
                     {% endif %}
-                    <div class="artist-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
-                        <span class="text-white fw-bold d-none">{{ artista.username }}</span>
+                    <div class="artist-overlay">
+                        <span>{{ artista.username }}</span>
                     </div>
                 </div>
                 <p class="text-center mt-2 fw-bold">{{ artista.username }}</p>
@@ -148,8 +239,8 @@
                 {% else %}
                     <img src="{% static 'images/default-commission.jpg' %}" class="img-fluid w-100" style="height: 150px; object-fit: cover;">
                 {% endif %}
-                <div class="comision-overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-0 hover-bg-opacity-75 d-flex align-items-center justify-content-center transition">
-                    <span class="text-white fw-bold d-none">{{ comision.nombre }}</span>
+                <div class="comision-overlay">
+                    <span>{{ comision.nombre }}</span>
                 </div>
             </div>
             <div class="text-center mt-2">
@@ -164,16 +255,11 @@
                     <span class="badge bg-danger mt-1">Sin slots</span>
                 {% endif %}
 
-                <!-- Botón guardar comisión (solo cliente logueado) -->
                 {% if user.is_authenticated and user.es_cliente %}
-                    <form method="POST" action="{% url 'guardar_comision' comision.id %}" style="display: inline; margin-top: 0.5rem;">
-                        {% csrf_token %}
-                        {% if comision.id in comisiones_guardadas_ids %}
-                            <button type="submit" class="btn btn-sm btn-danger">❤️ Guardado</button>
-                        {% else %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger">🤍 Guardar</button>
-                        {% endif %}
-                    </form>
+                    <button class="btn btn-sm {% if comision.id in comisiones_guardadas_ids %}btn-danger{% else %}btn-outline-danger{% endif %} mt-2"
+                            onclick="event.stopPropagation(); event.preventDefault(); toggleGuardarComision({{ comision.id }}, this)">
+                        {% if comision.id in comisiones_guardadas_ids %}❤️ Guardado{% else %}🤍 Guardar{% endif %}
+                    </button>
                 {% endif %}
             </div>
         </div>
@@ -182,32 +268,124 @@
     {% endfor %}
 </div>
 
+<!-- COMISIONES RECIENTES -->
+<h2 class="text-center my-5">Descubre las últimas comisiones</h2>
+<div class="row">
+    {% for comision in comisiones_recientes %}
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="comision-card position-relative overflow-hidden rounded-3" onclick="abrirModalComision({{ comision.id }})" style="cursor: pointer;">
+                {% if comision.imagen %}
+                    <img src="{{ comision.imagen.url }}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
+                {% else %}
+                    <img src="{% static 'images/default-commission.jpg' %}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="comision-overlay">
+                    <span>{{ comision.nombre }}</span>
+                </div>
+            </div>
+            <div class="text-center mt-2">
+                <strong>{{ comision.nombre }}</strong><br>
+                <small class="text-muted">
+                    🎨 <a href="{% url 'perfil_artista' comision.artista.id %}" style="color: #666; text-decoration: none;">{{ comision.artista.username }}</a>
+                </small><br>
+                <span class="fw-bold text-success">{{ comision.precio }}€</span><br>
+                {% if comision.slots_disponibles > 0 %}
+                    <span class="badge bg-success mt-1">{{ comision.slots_disponibles }} slots</span>
+                {% else %}
+                    <span class="badge bg-danger mt-1">Sin slots</span>
+                {% endif %}
+
+                {% if user.is_authenticated and user.es_cliente %}
+                    <button class="btn btn-sm {% if comision.id in comisiones_guardadas_ids %}btn-danger{% else %}btn-outline-danger{% endif %} mt-2"
+                            onclick="event.stopPropagation(); event.preventDefault(); toggleGuardarComision({{ comision.id }}, this)">
+                        {% if comision.id in comisiones_guardadas_ids %}❤️ Guardado{% else %}🤍 Guardar{% endif %}
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12 text-center py-5">
+            <h4>No hay comisiones disponibles</h4>
+            <p>Próximamente habrá más opciones.</p>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Botón para ver todas las comisiones -->
+<div class="text-center mt-4">
+    <a href="{% url 'buscar_comisiones' %}" class="btn btn-outline-primary btn-lg">
+        Ver todas las comisiones <i class="bi bi-arrow-right"></i>
+    </a>
+</div>
+
 <!-- Modal de detalle de comisión -->
-<div id="modal-detalle-comision" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
-    <div style="background-color: white; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; border-radius: 20px; padding: 2rem; position: relative;">
-        <button onclick="cerrarModalDetalleComision()" style="position: absolute; top: 10px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+<div id="modal-detalle-comision" class="modal">
+    <div class="modal-contenido">
+        <span class="cerrar-modal" onclick="cerrarModalDetalleComision()">&times;</span>
         <div id="modal-body">
             <p class="text-center">Cargando...</p>
         </div>
     </div>
 </div>
 
-
-
 <script>
-// Función para abrir modal de detalle de comisión (desde home)
+// Variables globales
+const csrfToken = '{{ csrf_token }}';
+window.csrfToken = csrfToken;
+
+// Función para guardar/eliminar comisión favorita con AJAX
+function toggleGuardarComision(comisionId, btn) {
+    event.stopPropagation();
+    event.preventDefault();
+
+    fetch(`/comision/${comisionId}/guardar/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.action === 'added') {
+                btn.classList.remove('btn-outline-danger');
+                btn.classList.add('btn-danger');
+                btn.innerHTML = '❤️ Guardado';
+            } else {
+                btn.classList.remove('btn-danger');
+                btn.classList.add('btn-outline-danger');
+                btn.innerHTML = '🤍 Guardar';
+            }
+            mostrarMensaje(data.message, 'success');
+        } else {
+            mostrarMensaje(data.error || 'Error al guardar', 'error');
+        }
+    })
+    .catch(error => {
+        mostrarMensaje('Error de conexión', 'error');
+    });
+}
+
+function mostrarMensaje(mensaje, tipo) {
+    const div = document.createElement('div');
+    div.textContent = mensaje;
+    div.style.cssText = `position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; z-index: 10000; color: white; background-color: ${tipo === 'success' ? '#28a745' : '#dc3545'};`;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 3000);
+}
+
 function abrirModalComision(comisionId) {
     var modal = document.getElementById('modal-detalle-comision');
     var modalBody = document.getElementById('modal-body');
 
     modal.style.display = 'flex';
-    modalBody.innerHTML = '<p>Cargando...</p>';
+    modalBody.innerHTML = '<p class="text-center">Cargando...</p>';
 
     fetch(`/comision/${comisionId}/detalle-modal/`)
         .then(response => response.text())
         .then(html => {
             modalBody.innerHTML = html;
-            // Ejecutar scripts dentro del modal
             const scripts = modalBody.querySelectorAll('script');
             scripts.forEach(oldScript => {
                 const newScript = document.createElement('script');
@@ -221,7 +399,8 @@ function abrirModalComision(comisionId) {
             });
         })
         .catch(error => {
-            modalBody.innerHTML = '<p>Error al cargar la información.</p>';
+            modalBody.innerHTML = '<p class="text-center text-danger">Error al cargar la información.</p>';
+            console.error("Error cargando modal:", error);
         });
 }
 
@@ -229,7 +408,6 @@ function cerrarModalDetalleComision() {
     document.getElementById('modal-detalle-comision').style.display = 'none';
 }
 
-// Cerrar modal al hacer clic fuera
 window.onclick = function(event) {
     const modal = document.getElementById('modal-detalle-comision');
     if (event.target === modal) {
