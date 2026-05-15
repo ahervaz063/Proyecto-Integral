@@ -752,6 +752,11 @@ class SolicitudCreateView(ClientRequiredMixin, View):
             referencias=request.FILES.get('referencias')
         )
 
+        #Notificar artista
+        artista = comision.artista
+        artista.notificaciones_pendientes += 1
+        artista.save()
+
         return JsonResponse({
             'success': True,
             'message': 'Solicitud enviada correctamente. El artista te responderá pronto.',
@@ -879,6 +884,10 @@ class CancelarSolicitudClienteView(ClientRequiredMixin, View):
         solicitud = get_object_or_404(SolicitudEncargo, id=solicitud_id, cliente=request.user)
 
         if solicitud.cancelar():
+            #Notificar al artista
+            solicitud.comision.artista.notificaciones_pendientes += 1
+            solicitud.comision.artista.save()
+
             return JsonResponse({
                 'success': True,
                 'message': 'Solicitud cancelada correctamente.'
@@ -897,6 +906,10 @@ class AceptarSolicitudView(ArtistRequiredMixin, View):
             return JsonResponse({'success': False, 'error': 'No tienes permiso.'}, status=403)
 
         if solicitud.aceptar():
+            #Notificar al cliente
+            solicitud.cliente.notificaciones_pendientes += 1
+            solicitud.cliente.save()
+
             return JsonResponse(
                 {'success': True, 'message': f'Solicitud de {solicitud.cliente.username} aceptada. Slot ocupado.'})
         else:
@@ -910,6 +923,10 @@ class RechazarSolicitudView(ArtistRequiredMixin, View):
             return JsonResponse({'success': False, 'error': 'No tienes permiso.'}, status=403)
 
         solicitud.rechazar()
+        #Notificar al cliente
+        solicitud.cliente.notificaciones_pendientes += 1
+        solicitud.cliente.save()
+
         return JsonResponse({'success': True, 'message': f'Solicitud de {solicitud.cliente.username} rechazada.'})
 
 
@@ -920,6 +937,10 @@ class FinalizarEncargoView(ArtistRequiredMixin, View):
             return JsonResponse({'success': False, 'error': 'No tienes permiso.'}, status=403)
 
         if solicitud.finalizar():
+            #Notificar al cliente
+            solicitud.cliente.notificaciones_pendientes += 1
+            solicitud.cliente.save()
+
             return JsonResponse({'success': True, 'message': 'Encargo finalizado. Espera la reseña del cliente.'})
         else:
             return JsonResponse({'success': False, 'error': 'Solo puedes finalizar encargos aceptados.'}, status=400)
@@ -1074,4 +1095,26 @@ def comision_detalle_modal(request, comision_id):
         'solicitud_activa': solicitud_activa
     })
 
+# NOTIFICACIONES
+# core/views.py
+class NotificacionesView(LoginRequiredMixin, TemplateView):
+    template_name = 'core/notificaciones.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+
+        # Obtener notificaciones según tipo de usuario
+        if user.es_artista():
+            context['solicitudes'] = SolicitudEncargo.objects.filter(
+                comision__artista=user
+            ).order_by('-fecha_solicitud')[:20]
+        else:
+            context['solicitudes'] = user.solicitudes_realizadas.all().order_by('-fecha_solicitud')[:20]
+
+        # Reiniciar contador
+        user.notificaciones_pendientes = 0
+        user.save()
+
+        return context
 

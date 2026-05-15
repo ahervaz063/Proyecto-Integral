@@ -1,0 +1,46 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Notificaciones{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 800px; margin: 50px auto;">
+    <h1 class="mb-4">Notificaciones</h1>
+    
+    {% if solicitudes %}
+        {% for solicitud in solicitudes %}
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>Comisión:</strong> {{ solicitud.comision.nombre }}
+                            <p class="mb-0 small text-muted">
+                                {% if user.es_artista %}
+                                    Cliente: @{{ solicitud.cliente.username }}
+                                {% else %}
+                                    Artista: @{{ solicitud.comision.artista.username }}
+                                {% endif %}
+                            </p>
+                        </div>
+                        <span class="badge 
+                            {% if solicitud.estado == 'pendiente' %}bg-warning
+                            {% elif solicitud.estado == 'aceptada' %}bg-success
+                            {% elif solicitud.estado == 'rechazada' %}bg-danger
+                            {% else %}bg-secondary{% endif %}">
+                            {{ solicitud.get_estado_display }}
+                        </span>
+                    </div>
+                    <p class="mt-2 small">{{ solicitud.fecha_solicitud|date:"d/m/Y H:i" }}</p>
+                    
+                    {% if solicitud.estado == 'pendiente' and user.es_artista %}
+                        <div class="mt-2">
+                            <a href="{% url 'solicitudes_artista' %}" class="btn btn-sm btn-primary">Ver y responder</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">No tienes notificaciones pendientes.</div>
+    {% endif %}
+</div>
+{% endblock %}

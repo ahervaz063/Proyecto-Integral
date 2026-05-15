@@ -2,15 +2,43 @@
 
 {% block title %}Iniciar sesión - Medici{% endblock %}
 
+{% block extra_css %}
+<style>
+    .password-container {
+        position: relative;
+    }
+    .password-container input {
+        width: 100%;
+        padding: 12px;
+        padding-right: 45px;  /* Espacio para el icono */
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    .toggle-password {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #666;
+        font-size: 1.2rem;
+        user-select: none;
+    }
+    .toggle-password:hover {
+        color: #333;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container" style="max-width: 1000px; margin: 50px auto; padding: 20px;">
-    
+
     <div style="display: flex; gap: 50px; align-items: center;">
-        
+
         <!-- Columna izquierda: dibujo/ilustración -->
         <div style="flex: 1; text-align: center;">
             <div style="background-color: #e0e0e0; border-radius: 20px; padding: 40px; min-height: 300px; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 100px;"></span>
+                <span style="font-size: 100px;">🎨</span>
             </div>
             <p style="margin-top: 20px; color: #666;">Conecta con artistas y mecenas</p>
         </div>
@@ -36,7 +64,12 @@
 
                 <div style="margin-bottom: 25px;">
                     <label for="password" style="display: block; margin-bottom: 5px;">Contraseña</label>
-                    <input type="password" id="password" name="password" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 5px;" required>
+                    <div class="password-container">
+                        <input type="password" id="password" name="password" required>
+                        <span class="toggle-password" onclick="togglePasswordVisibility()">
+                            <i class="bi bi-eye"></i>
+                        </span>
+                    </div>
                 </div>
 
                 <button type="submit" style="width: 100%; padding: 12px; background-color: #333; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">Iniciar sesión</button>
@@ -49,4 +82,21 @@
 
     </div>
 </div>
+
+<script>
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('password');
+        const toggleIcon = document.querySelector('.toggle-password');
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('bi-eye');
+            toggleIcon.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('bi-eye-slash');
+            toggleIcon.classList.add('bi-eye');
+        }
+    }
+</script>
 {% endblock %}

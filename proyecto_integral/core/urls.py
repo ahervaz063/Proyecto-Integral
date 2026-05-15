@@ -67,4 +67,7 @@ urlpatterns = [
 
     #Eliminar cuenta
     path('eliminar-cuenta/', views.EliminarCuentaView.as_view(), name='eliminar_cuenta'),
+
+    #Notificaciones
+    path('notificaciones/', views.NotificacionesView.as_view(), name='notificaciones'),
 ]

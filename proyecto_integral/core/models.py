@@ -22,6 +22,7 @@ class Usuario(AbstractUser):
         verbose_name="Tipo de usuario"
     )
     fecha_nacimiento = models.DateField(null=True, blank=True, verbose_name="Fecha de nacimiento")
+    notificaciones_pendientes = models.PositiveIntegerField(default=0, verbose_name="Notificaciones pendientes")
 
     # Campos requeridos para crear superusuario
     REQUIRED_FIELDS = ['email']

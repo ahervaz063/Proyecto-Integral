@@ -352,7 +352,7 @@
                 <div id="guardados" class="panel oculto">
                     <div class="galeria">
                         {% for guardado in comisiones_guardadas %}
-                             <div class="item-guardado">
+                             <div class="item-guardado" onclick="abrirModalComision({{ guardado.comision.id }})" style="cursor: pointer;">
                                 {% if guardado.comision.imagen %}
                                     <img src="{{ guardado.comision.imagen.url }}" alt="{{ guardado.comision.nombre }}">
                                 {% else %}
@@ -361,12 +361,17 @@
                                 <div class="corazon-lleno">❤️</div>
                                 <div class="guardado-info">
                                     <strong>{{ guardado.comision.nombre }}</strong>
-                                    <p class="small">🎨 {{ guardado.comision.artista.username }}</p>
+                                    <p class="small">
+                                        🎨 <a href="{% url 'perfil_artista' guardado.comision.artista.id %}"
+                                              onclick="event.stopPropagation()"
+                                              style="color: #666; text-decoration: none;">
+                                            {{ guardado.comision.artista.username }}
+                                        </a>
+                                    </p>
                                     <p class="small">{{ guardado.comision.precio }}€</p>
 
-                                    <!-- Botón para eliminar de favoritos (AJAX) -->
                                     <button class="btn btn-sm btn-outline-danger mt-2"
-                                            onclick="toggleGuardarComision({{ guardado.comision.id }}, this)">
+                                            onclick="event.stopPropagation(); toggleGuardarComision({{ guardado.comision.id }}, this)">
                                         💔 Eliminar
                                     </button>
                                 </div>

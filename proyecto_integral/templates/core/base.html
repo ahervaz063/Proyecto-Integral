@@ -38,6 +38,9 @@
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="bi bi-person-circle"></i> {{ user.username }}
+                                {% if user.notificaciones_pendientes > 0 %}
+                                    <span class="badge bg-danger rounded-pill">{{ user.notificaciones_pendientes }}</span>
+                                {% endif %}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 {% if user.es_artista %}
@@ -52,6 +55,15 @@
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item text-danger" href="/admin/">Panel de Administración</a></li>
                                 {% endif %}
+
+                                <!-- Notificaciones -->
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{% url 'notificaciones' %}">
+                                    <i class="bi bi-bell"></i> Notificaciones
+                                    {% if user.notificaciones_pendientes > 0 %}
+                                        <span class="badge bg-danger">{{ user.notificaciones_pendientes }} nuevas</span>
+                                    {% endif %}
+                                </a></li>
 
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item" href="{% url 'logout' %}">Cerrar sesión</a></li>
